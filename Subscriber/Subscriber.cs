@@ -42,9 +42,9 @@ namespace SESDAD
             throw new NotImplementedException();
         }
 
-        public void ReceiveContent(string temp)
+        public void ReceiveContent(Event evt)
         {
-            System.Console.WriteLine(temp);
+            System.Console.WriteLine("Topic: " + evt.Topic + " Content: " + evt.Content);
         }
 
 

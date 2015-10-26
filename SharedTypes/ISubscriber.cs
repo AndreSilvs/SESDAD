@@ -6,6 +6,6 @@ namespace SESDAD
 {
     public interface ISubscriber
     {
-        void ReceiveContent(string temp);
+        void ReceiveContent(Event evt);
     }
 }

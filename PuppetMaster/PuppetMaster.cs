@@ -178,10 +178,6 @@ namespace SESDAD {
 
             System.Console.WriteLine( "Hi, I'm a puppet master..." );
 
-            IPuppetPublisher pub;
-            publishers.TryGetValue("publisher0", out pub);
-            pub.ForcePublish(0,"asdf",0);
-
             Console.WriteLine( "Enter commands: " );
             string command = "";
             while ( command != "exit" ) {
@@ -215,6 +211,9 @@ namespace SESDAD {
                     else if ( command.type == FileParsing.CommandType.Unsubscribe ) {
                     }
                     else if ( command.type == FileParsing.CommandType.Publish ) {
+                        IPuppetPublisher pub;
+                        publishers.TryGetValue(command.properties[0], out pub);
+                        pub.ForcePublish(Int32.Parse(command.properties[1]), command.properties[2], Int32.Parse(command.properties[3]));
                     }
                     else if ( command.type == FileParsing.CommandType.Status ) {
                     }
@@ -242,6 +241,7 @@ namespace SESDAD {
                 Console.WriteLine( "Unrecognized command." );
             }
         } // End of function
+
     } // End of class
 } // End of namespace
 

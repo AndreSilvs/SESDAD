@@ -62,16 +62,16 @@ namespace SESDAD
         }
 
         //Broker
-        public void SendContent(string temp)
+        public void SendContent(Event evt)
         {
             foreach (ISubscriber coiso in Broker.subscribers)
             {
-                coiso.ReceiveContent(temp);
+                coiso.ReceiveContent(evt);
             }
 
             foreach (IBroker coiso in Broker.children)
             {
-                coiso.SendContent(temp);
+                coiso.SendContent(evt);
             }
         }
 
@@ -121,12 +121,5 @@ namespace SESDAD
             System.Console.ReadLine();
         }
 
-        static public void SendToSubscribers(string temp)
-        {
-            foreach(ISubscriber coiso in subscribers)
-            {
-                coiso.ReceiveContent(temp);
-            }
-        }
     }
 }

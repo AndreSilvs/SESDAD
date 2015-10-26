@@ -20,7 +20,7 @@ namespace SESDAD
         }
 
         public void ForcePublish( int numberEvents, string topicname, int interval_ms ) {
-            Publisher.broker.SendContent("banana");
+            Publisher.broker.SendContent(new Event(topicname,"banana"));
         }
 
         public void Status() {
