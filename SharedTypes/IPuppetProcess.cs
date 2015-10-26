@@ -4,6 +4,7 @@ using System.Text;
 
 namespace SESDAD {
     public interface IPuppetProcess {
+        void RegisterPuppetMaster(string address);
         void Status();
 
         void Freeze();

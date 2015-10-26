@@ -57,12 +57,23 @@ namespace SESDAD
         {
             throw new NotImplementedException();
         }
+
+        public void RegisterPuppetMaster(string address)
+        {
+            Subscriber.puppetMaster = (IPuppetMaster)Activator.GetObject(
+                 typeof(IPuppetMaster),
+                 address);
+
+            Console.WriteLine("I'm a puppet");
+        }
     }
 
         class Subscriber
     {
 
         static public IBroker broker;
+        static public IPuppetMaster puppetMaster;
+
         static void Main(string[] args)
         {
             if ( args.Length != 2 ) {

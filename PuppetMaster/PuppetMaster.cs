@@ -21,13 +21,21 @@ namespace SESDAD {
 
     class PuppetMaster {
 
+        static string pmAddress = "tcp://localhost:8080/puppetmaster";
+
         static Dictionary<String, IPuppetSubscriber> subscribers = new Dictionary<String, IPuppetSubscriber>();
         static Dictionary<String, IPuppetPublisher> publishers = new Dictionary<String, IPuppetPublisher>();
         static Dictionary<String, IPuppetBroker> brokers = new Dictionary<String, IPuppetBroker>();
+        static Dictionary<String, IPuppetProcess> processes = new Dictionary<String, IPuppetProcess>();
 
         static void Main( string[] args ) {
             TcpChannel channel = new TcpChannel( 8080 );
             ChannelServices.RegisterChannel( channel, true );
+
+            RemotingConfiguration.RegisterWellKnownServiceType(
+              typeof(RemotePuppetMaster),
+              pmAddress,
+              WellKnownObjectMode.Singleton);
 
             FileParsing.ConfigurationData config = null;
             try {
@@ -94,10 +102,24 @@ namespace SESDAD {
                     PuppetMaster.subscribers.Add(processData.name, obj);
                 }
 
+                IPuppetProcess obj2 = (IPuppetProcess)Activator.GetObject(
+                                              typeof(IPuppetProcess),
+                                              processData.url);
+
+                PuppetMaster.processes.Add(processData.name, obj2);
+
             }
 
             foreach (FileParsing.Process processData in config.processes)
             {
+                IPuppetProcess objProcess;
+
+                processes.TryGetValue(processData.name, out objProcess);
+                if (objProcess != null)
+                {
+                    objProcess.RegisterPuppetMaster(pmAddress);
+                }
+
                 if (processData.type == FileParsing.ProcessType.Broker)
                 {
                     FileParsing.Site site;

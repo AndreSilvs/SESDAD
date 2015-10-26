@@ -80,6 +80,14 @@ namespace SESDAD
           //  throw new NotImplementedException();
         }
 
+        public void RegisterPuppetMaster(string address)
+        {
+            Broker.puppetMaster = (IPuppetMaster)Activator.GetObject(
+               typeof(IPuppetMaster),
+               address);
+
+            Console.WriteLine("I'm a puppet");
+        }
     }
     class Broker
     {
@@ -90,6 +98,8 @@ namespace SESDAD
         static public List<IBroker> children = new List<IBroker>();
 
         static public IBroker parent;
+
+        static public IPuppetMaster puppetMaster;
 
         static void Main(string[] args)
         {

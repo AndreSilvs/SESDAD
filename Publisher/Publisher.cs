@@ -38,11 +38,24 @@ namespace SESDAD
         public void Unfreeze() {
             throw new NotImplementedException();
         }
+
+        public void RegisterPuppetMaster(string address)
+        {
+            Publisher.puppetMaster = (IPuppetMaster)Activator.GetObject(
+                typeof(IPuppetMaster),
+                address);
+
+            Console.WriteLine("I'm a puppet");
+        }
     }
 
     class Publisher
     {
         static public IBroker broker;
+        static public string processName;
+
+        static public IPuppetMaster puppetMaster;
+
         static void Main(string[] args)
         {
             if ( args.Length != 2 ) {
