@@ -1,0 +1,12 @@
+LoggingLevel full
+RoutingPolicy filter
+Ordering total
+
+Site site0 Parent none
+Site site1 Parent site0
+
+Process broker0 Is broker On site0 URL tcp://localhost:8086/broker
+Process subscriber0 Is subscriber On site0 URL tcp://localhost:8087/sub
+Process publisher0 Is publisher On site0 URL tcp://localhost:8088/pub
+Process broker1 Is broker On site1 URL tcp://localhost:8089/broker
+Process subscriber1 Is subscriber On site1 URL tcp://localhost:8090/sub
