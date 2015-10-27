@@ -6,20 +6,35 @@ using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
+using System.Runtime.Remoting.Messaging;
 using System.Diagnostics;
 
 namespace SESDAD {
+
+    public delegate void PuppetPublishDelegate( int numEvents, string topicname, int interval );
 
     public class RemotePuppetMaster : MarshalByRefObject, IPuppetMaster
     {
         public void Log(string message)
         {
-            Console.WriteLine(message);
+            PuppetMaster.LogMessage( message );
         }
     }
 
 
     class PuppetMaster {
+
+        public static void LogMessage( string message ) {
+            string fullMessage = message + "\r\n";
+            System.IO.File.AppendAllText( @"log.txt", fullMessage );
+            //Console.WriteLine( fullMessage );
+        }
+
+        public static void PuppetPublishCallback( IAsyncResult ar ) {
+            PuppetPublishDelegate del = (PuppetPublishDelegate)((AsyncResult)ar).AsyncDelegate;
+            del.EndInvoke( ar );
+            return;
+        }
 
         static string pmAddress = "tcp://localhost:8080/puppetmaster";
 
@@ -34,7 +49,7 @@ namespace SESDAD {
 
             RemotingConfiguration.RegisterWellKnownServiceType(
               typeof(RemotePuppetMaster),
-              pmAddress,
+              "puppetmaster",
               WellKnownObjectMode.Singleton);
 
             FileParsing.ConfigurationData config = null;
@@ -228,6 +243,12 @@ namespace SESDAD {
                     var command = commands.GetNextCommand();
 
                     // TODO: Implement
+                    if ( command.type == FileParsing.CommandType.Invalid ) {
+                        continue;
+                    }
+
+                    LogMessage( command.fullInput );
+
                     if ( command.type == FileParsing.CommandType.Subscribe ) {
                     }
                     else if ( command.type == FileParsing.CommandType.Unsubscribe ) {
@@ -235,7 +256,11 @@ namespace SESDAD {
                     else if ( command.type == FileParsing.CommandType.Publish ) {
                         IPuppetPublisher pub;
                         publishers.TryGetValue(command.properties[0], out pub);
-                        pub.ForcePublish(Int32.Parse(command.properties[1]), command.properties[2], Int32.Parse(command.properties[3]));
+
+                        //pub.ForcePublish( Int32.Parse( command.properties[ 1 ] ), command.properties[ 2 ], Int32.Parse( command.properties[ 3 ] ) );
+                        PuppetPublishDelegate del = new PuppetPublishDelegate( pub.ForcePublish );
+                        AsyncCallback remoteCallback = new AsyncCallback( PuppetPublishCallback );
+                        IAsyncResult remAr = del.BeginInvoke( Int32.Parse( command.properties[ 1 ] ), command.properties[ 2 ], Int32.Parse( command.properties[ 3 ] ), remoteCallback, null );
                     }
                     else if ( command.type == FileParsing.CommandType.Status ) {
                     }

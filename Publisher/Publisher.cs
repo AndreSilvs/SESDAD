@@ -6,10 +6,32 @@ using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
+using System.Runtime.Remoting.Messaging;
+using System.Net.Sockets;
+using System.Threading;
 
 namespace SESDAD
 {
     class RemotePublisher : MarshalByRefObject, IPuppetPublisher, IPuppetProcess, IPublisher {
+
+        public delegate void PublishPuppetLog( string message );
+        public delegate void PublishTopicDelegate( Event ev );
+
+        // Non-interface methods
+        public static void PublishAsyncCallBack( IAsyncResult ar ) {
+            PublishTopicDelegate del = (PublishTopicDelegate)((AsyncResult)ar).AsyncDelegate;
+            del.EndInvoke( ar );
+            return;
+        }
+
+        public static void PublishLogCallBack( IAsyncResult ar ) {
+            PublishPuppetLog del = (PublishPuppetLog)((AsyncResult)ar).AsyncDelegate;
+            del.EndInvoke( ar );
+            return;
+        }
+
+
+        //----------------------
 
         public void RegisterBroker( string address ) {
             Publisher.broker = (IBroker)Activator.GetObject(
@@ -20,7 +42,16 @@ namespace SESDAD
         }
 
         public void ForcePublish( int numberEvents, string topicname, int interval_ms ) {
-            Publisher.broker.SendContent(new Event(topicname,"banana"));
+            //Publisher.broker.SendContent(new Event(topicname,"banana"));
+            PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContent );
+            AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
+            IAsyncResult remAr = del.BeginInvoke( new Event(topicname,"banana" ), remoteCallback, null );
+
+            //Publisher.puppetMaster.Log( "PubEvent" );
+            PublishPuppetLog logDel = new PublishPuppetLog( Publisher.puppetMaster.Log );
+            AsyncCallback remoteCallbackLog = new AsyncCallback( PublishLogCallBack );
+            IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent publisher, banana",remoteCallbackLog, null );
+
         }
 
         public void Status() {

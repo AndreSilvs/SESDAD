@@ -13,6 +13,7 @@ namespace SESDAD {
 
         public struct ScriptCommandDescription {
             public CommandType type;
+            public string fullInput;
             public string[] properties;
         }
 
@@ -43,6 +44,7 @@ namespace SESDAD {
 
                 ScriptCommandDescription description = new ScriptCommandDescription();
                 description.type = CommandType.Invalid;
+                description.fullInput = command;
 
                 if ( command.StartsWith( "Subscriber" ) ) {
                     Regex pattern = new Regex( @"Subscriber (?<pname>\w+) (?<type>Subscribe|Unsubscribe) (?<topic>[\w/]+)" );
