@@ -7,5 +7,6 @@ namespace SESDAD
     public interface IBroker
     {
         void SendContent(Event evt);
+        void SendContentUp(Event evt);
     }
 }

@@ -6,11 +6,27 @@ using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
+using System.Runtime.Remoting.Messaging;
+using System.Net.Sockets;
+using System.Threading;
 
 namespace SESDAD
 {
+
     class RemoteBroker : MarshalByRefObject, IBroker, IPuppetBroker, IPuppetProcess
     {
+
+        public delegate void SendContentDelegate(Event ev);
+
+        // Non-interface methods
+        public static void PublishAsyncCallBack(IAsyncResult ar)
+        {
+            SendContentDelegate del = (SendContentDelegate)((AsyncResult)ar).AsyncDelegate;
+            del.EndInvoke(ar);
+            return;
+        }
+
+
         //PuppetMaster
         public void RegisterChild( string address ) {
             Broker.children.Add((IBroker)Activator.GetObject(
@@ -63,7 +79,16 @@ namespace SESDAD
 
         //Broker
         public void SendContent(Event evt)
-        {
+        { 
+            //Devo fazer 1 chamada asyncrona para cada subscriber ou 1 para todos????????
+            //??????????????????????
+            //????????????????
+            SendContentDelegate del = new SendContentDelegate(Broker.SendContent);
+            AsyncCallback remoteCallback = new AsyncCallback(PublishAsyncCallBack);
+            IAsyncResult remAr = del.BeginInvoke(evt, remoteCallback, null);
+
+            /*Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
+
             foreach (ISubscriber coiso in Broker.subscribers)
             {
                 coiso.ReceiveContent(evt);
@@ -72,6 +97,18 @@ namespace SESDAD
             foreach (IBroker coiso in Broker.children)
             {
                 coiso.SendContent(evt);
+            }*/
+        }
+
+        public void SendContentUp(Event evt)
+        {
+            if(Broker.parent != null)
+            {
+                SendContentUp(evt);
+            }
+            else
+            {
+                //Send content down
             }
         }
 
@@ -132,6 +169,22 @@ namespace SESDAD
            // SendToSubscribers("banana");
 
             System.Console.ReadLine();
+        }
+
+        static public void SendContent(Event evt)
+        {
+
+            Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
+
+            foreach (ISubscriber coiso in Broker.subscribers)
+            {
+                coiso.ReceiveContent(evt);
+            }
+
+            foreach (IBroker coiso in Broker.children)
+            {
+                coiso.SendContent(evt);
+            }
         }
 
     }
