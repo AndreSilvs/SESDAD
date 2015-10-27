@@ -77,7 +77,7 @@ namespace SESDAD {
                     newProcess.StartInfo.FileName = @"..\..\..\Broker\bin\Debug\Broker.exe";
 
                     // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
-                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName;
+                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name;
                     newProcess.Start();
 
                     IPuppetBroker obj = (IPuppetBroker)Activator.GetObject(
@@ -92,7 +92,7 @@ namespace SESDAD {
                     newProcess.StartInfo.FileName = @"..\..\..\Publisher\bin\Debug\Publisher.exe";
 
                     // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
-                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName;
+                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name; 
                     newProcess.Start();
 
                     IPuppetPublisher obj = (IPuppetPublisher)Activator.GetObject(
@@ -107,7 +107,7 @@ namespace SESDAD {
                     newProcess.StartInfo.FileName = @"..\..\..\Subscriber\bin\Debug\Subscriber.exe";
 
                     // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
-                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName;
+                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name;
                     newProcess.Start();
 
                     IPuppetSubscriber obj = (IPuppetSubscriber)Activator.GetObject(

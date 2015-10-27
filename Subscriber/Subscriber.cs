@@ -73,10 +73,11 @@ namespace SESDAD
 
         static public IBroker broker;
         static public IPuppetMaster puppetMaster;
+        static public string name;
 
         static void Main(string[] args)
         {
-            if ( args.Length != 2 ) {
+            if ( args.Length != 3 ) {
                 return;
             }
 
@@ -86,6 +87,7 @@ namespace SESDAD
 
             int port; Int32.TryParse( args[ 0 ], out port );
             string serviceName = args[ 1 ];
+            Subscriber.name = args[2];
 
             TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, true);

@@ -50,7 +50,7 @@ namespace SESDAD
             //Publisher.puppetMaster.Log( "PubEvent" );
             PublishPuppetLog logDel = new PublishPuppetLog( Publisher.puppetMaster.Log );
             AsyncCallback remoteCallbackLog = new AsyncCallback( PublishLogCallBack );
-            IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent publisher, banana",remoteCallbackLog, null );
+            IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent " + Publisher.name + " banana",remoteCallbackLog, null );
 
         }
 
@@ -83,13 +83,13 @@ namespace SESDAD
     class Publisher
     {
         static public IBroker broker;
-        static public string processName;
+        static public string name;
 
         static public IPuppetMaster puppetMaster;
 
         static void Main(string[] args)
         {
-            if ( args.Length != 2 ) {
+            if ( args.Length != 3 ) {
                 return;
             }
 
@@ -99,6 +99,7 @@ namespace SESDAD
 
             int port; Int32.TryParse( args[ 0 ], out port );
             string serviceName = args[ 1 ];
+            Publisher.name = args[2];
 
             TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, true);
