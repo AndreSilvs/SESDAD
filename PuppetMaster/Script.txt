@@ -1,8 +1,3 @@
-Subscriber subscriber0 Subscribe games
-Subscriber subscriber0 Unsubscribe cookies
-Publisher publisher0 Publish 3 Ontopic games Interval 500
-Status
-Crash publisher0
-Freeze subscriber0
-Wait 1000
-Unfreeze subscriber0
+Subscriber subscriber2 Subscribe animal
+Subscriber subscriber1 Subscribe animal
+Subscriber subscriber2 Unsubscribe animal

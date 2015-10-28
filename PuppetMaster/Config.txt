@@ -4,7 +4,7 @@ Ordering total
 
 Site site0 Parent none
 Site site1 Parent site0
-Site site2 Parent site0
+Site site2 Parent site1
 
 Process broker0 Is broker On site0 URL tcp://localhost:8086/broker
 Process subscriber0 Is subscriber On site0 URL tcp://localhost:8087/sub

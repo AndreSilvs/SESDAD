@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
+using System.Runtime.Remoting.Messaging;
 
 namespace SESDAD
 {
@@ -29,12 +30,12 @@ namespace SESDAD
 
         public void ForceSubscribe(string topicname)
         {
-            throw new NotImplementedException();
+            Subscriber.Subscribe( topicname );
         }
 
         public void ForceUnsubscribe(string topicname)
         {
-            throw new NotImplementedException();
+            Subscriber.Unsubscribe( topicname );
         }
 
         public void Freeze()
@@ -69,12 +70,39 @@ namespace SESDAD
         }
     }
 
-        class Subscriber
+
+    public delegate void SubscriberDelegate( string name, string topic );
+
+    class Subscriber
     {
 
         static public IBroker broker;
         static public IPuppetMaster puppetMaster;
         static public string name;
+
+        public static void SubscriberCallback( IAsyncResult ar ) {
+            SubscriberDelegate del = (SubscriberDelegate)((AsyncResult)ar).AsyncDelegate;
+            del.EndInvoke( ar );
+            return;
+        }
+
+        public static void Subscribe( string topic ) {
+            Console.WriteLine( "Subscribing to: " + topic );
+
+            //broker.Subscribe( name, topic );
+            SubscriberDelegate del = new SubscriberDelegate( broker.Subscribe );
+            AsyncCallback remoteCallback = new AsyncCallback( SubscriberCallback );
+            IAsyncResult remAr = del.BeginInvoke( name, topic, remoteCallback, null );
+        }
+
+        public static void Unsubscribe( string topic ) {
+            Console.WriteLine( "Unsubscribing from: " + topic );
+
+            //broker.Unsubscribe( name, topic );
+            SubscriberDelegate del = new SubscriberDelegate( broker.Unsubscribe );
+            AsyncCallback remoteCallback = new AsyncCallback( SubscriberCallback );
+            IAsyncResult remAr = del.BeginInvoke( name, topic, remoteCallback, null );
+        }
 
         static void Main(string[] args)
         {

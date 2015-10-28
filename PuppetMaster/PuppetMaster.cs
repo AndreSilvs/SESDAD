@@ -13,6 +13,8 @@ namespace SESDAD {
 
     public delegate void PuppetPublishDelegate( int numEvents, string topicname, int interval );
 
+    public delegate void PuppetSubscribeDelegate( string topic );
+
     public class RemotePuppetMaster : MarshalByRefObject, IPuppetMaster
     {
         public void Log(string message)
@@ -24,14 +26,23 @@ namespace SESDAD {
 
     class PuppetMaster {
 
+        private static object mutex = new object();
         public static void LogMessage( string message ) {
-            string fullMessage = message + "\r\n";
-            System.IO.File.AppendAllText( @"log.txt", fullMessage );
+            lock ( mutex ) {
+                string fullMessage = message + "\r\n";
+                System.IO.File.AppendAllText( @"log.txt", fullMessage );
+            }
             //Console.WriteLine( fullMessage );
         }
 
         public static void PuppetPublishCallback( IAsyncResult ar ) {
             PuppetPublishDelegate del = (PuppetPublishDelegate)((AsyncResult)ar).AsyncDelegate;
+            del.EndInvoke( ar );
+            return;
+        }
+
+        public static void PuppetSubscribeCallback( IAsyncResult ar ) {
+            PuppetSubscribeDelegate del = (PuppetSubscribeDelegate)((AsyncResult)ar).AsyncDelegate;
             del.EndInvoke( ar );
             return;
         }
@@ -44,6 +55,8 @@ namespace SESDAD {
         static Dictionary<String, IPuppetProcess> processes = new Dictionary<String, IPuppetProcess>();
 
         static void Main( string[] args ) {
+            System.IO.File.WriteAllText( @"log.txt", string.Empty );
+
             TcpChannel channel = new TcpChannel( 8080 );
             ChannelServices.RegisterChannel( channel, true );
 
@@ -54,7 +67,7 @@ namespace SESDAD {
 
             FileParsing.ConfigurationData config = null;
             try {
-                config = FileParsing.ConfigurationFile.ReadConfigurationFile( @"config.txt" );
+                config = FileParsing.ConfigurationFile.ReadConfigurationFile( @"../../config.txt" );
             }
             catch ( Exception e ) {
                 Console.WriteLine( "Error reading configuration file." );
@@ -163,13 +176,13 @@ namespace SESDAD {
                                 brokers.TryGetValue(parentName, out objParent);
                                 if (objParent != null)
                                 {
-                                    objParent.RegisterChild(processData.url);
+                                    objParent.RegisterChild(processData.url, processData.name);
                                 }
                         }
 
                         foreach (FileParsing.Process subProcess in site.subscribers)
                         {
-                            obj.RegisterSubscriber(subProcess.url);
+                            obj.RegisterSubscriber(subProcess.url, subProcess.name );
                         }
 
                         foreach (FileParsing.Process pubProcess in site.publishers)
@@ -242,16 +255,38 @@ namespace SESDAD {
                 while ( !commands.Empty() ) {
                     var command = commands.GetNextCommand();
 
-                    // TODO: Implement
                     if ( command.type == FileParsing.CommandType.Invalid ) {
                         continue;
                     }
 
                     LogMessage( command.fullInput );
 
+                    // TODO: Implement all commands
                     if ( command.type == FileParsing.CommandType.Subscribe ) {
+                        IPuppetSubscriber sub;
+                        subscribers.TryGetValue( command.properties[ 0 ], out sub );
+                        if ( sub != null ) {
+                            //sub.ForceSubscribe( command.properties[ 1 ] );
+                            PuppetSubscribeDelegate del = new PuppetSubscribeDelegate( sub.ForceSubscribe );
+                            AsyncCallback remoteCallback = new AsyncCallback( PuppetSubscribeCallback );
+                            IAsyncResult remAr = del.BeginInvoke( command.properties[ 1 ], remoteCallback, null );
+                        }
+                        else {
+                            Console.WriteLine( "Invalid subscriber name: \"" + command.properties[ 0 ] + "\" Cannot process subscribe command." );
+                        }
                     }
                     else if ( command.type == FileParsing.CommandType.Unsubscribe ) {
+                        IPuppetSubscriber sub;
+                        subscribers.TryGetValue( command.properties[ 0 ], out sub );
+                        if ( sub != null ) {
+                            //sub.ForceSubscribe( command.properties[ 1 ] );
+                            PuppetSubscribeDelegate del = new PuppetSubscribeDelegate( sub.ForceUnsubscribe );
+                            AsyncCallback remoteCallback = new AsyncCallback( PuppetSubscribeCallback );
+                            IAsyncResult remAr = del.BeginInvoke( command.properties[ 1 ], remoteCallback, null );
+                        }
+                        else {
+                            Console.WriteLine( "Invalid subscriber name: \"" + command.properties[ 0 ] + "\" Cannot process unsubscribe command." );
+                        }
                     }
                     else if ( command.type == FileParsing.CommandType.Publish ) {
                         IPuppetPublisher pub;

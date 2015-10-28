@@ -12,53 +12,166 @@ using System.Threading;
 
 namespace SESDAD
 {
+    public class NamedSubscriber {
+        public string name;
+        public ISubscriber subcriber;
 
-    class RemoteBroker : MarshalByRefObject, IBroker, IPuppetBroker, IPuppetProcess
-    {
+        public NamedSubscriber( string name, ISubscriber sub ) {
+            this.name = name;
+            this.subcriber = sub;
+        }
+    }
+    public class NamedBroker {
+        public string name;
+        public IBroker broker;
 
-        public delegate void SendContentDelegate(Event ev);
+        public NamedBroker( string name, IBroker bro ) {
+            this.name = name;
+            this.broker = bro;
+        }
+    }
+    public class TopicSubscribers {
+        public string topic;
+        public List<NamedSubscriber> subscribers = new List<NamedSubscriber>();
+
+        public bool HasSubscribers() { return subscribers.Count > 0; }
+        public void AddSubscriber( string name, ISubscriber sub ) {
+            if ( !subscribers.Exists( n => n.name == name ) ) {
+                subscribers.Add( new NamedSubscriber( name, sub ) );
+            }
+        }
+        public void RemoveSubscriber( string name ) {
+            subscribers.RemoveAll( n => n.name == name );
+        }
+    }
+
+    public class TopicBrokers {
+        public string topic;
+        public List<NamedBroker> brokers = new List<NamedBroker>();
+
+        public bool HasBrokers() { return brokers.Count > 0; }
+        public void AddBroker( string name, IBroker bro ) {
+            if ( !brokers.Exists( n => n.name == name ) ) {
+                brokers.Add( new NamedBroker( name, bro ) );
+            }
+        }
+        public void RemoveBroker( string name ) {
+            brokers.RemoveAll( n => n.name == name );
+        }
+    }
+
+    public class TopicSubscriberList {
+
+        private List<TopicSubscribers> topicSubscribers = new List<TopicSubscribers>();
+
+        public void AddTopicSubscriber( string topic, string name, ISubscriber sub ) {
+            TopicSubscribers entry = FindTopic( topic );
+            if ( entry != null ) {
+                entry.AddSubscriber( name, sub );
+                return;
+            }
+            entry = new TopicSubscribers();
+            entry.topic = topic;
+            entry.AddSubscriber( name, sub );
+            topicSubscribers.Add( entry );
+        }
+        public void RemoveTopicSubscriber( string topic, string name ) {
+            TopicSubscribers entry = FindTopic( topic );
+            if ( entry != null ) {
+                entry.RemoveSubscriber( name );
+                if ( !entry.HasSubscribers() ) {
+                    topicSubscribers.Remove( entry );
+                }
+            }
+        }
+
+        public TopicSubscribers FindTopic( string topic ) {
+            return topicSubscribers.Find( n => n.topic == topic );
+        }
+
+        public bool HasTopic( string topic ) {
+            return topicSubscribers.Exists( n => n.topic == topic );
+        }
+    }
+
+    public class TopicBrokerList {
+
+        private List<TopicBrokers> topicBrokers = new List<TopicBrokers>();
+
+        public void AddTopicBroker( string topic, string name, IBroker bro ) {
+            TopicBrokers entry = FindTopic( topic );
+            if ( entry != null ) {
+                entry.AddBroker( name, bro );
+                return;
+            }
+            entry = new TopicBrokers();
+            entry.topic = topic;
+            entry.AddBroker( name, bro );
+            topicBrokers.Add( entry );
+        }
+        public void RemoveTopicBroker( string topic, string name ) {
+            TopicBrokers entry = FindTopic( topic );
+            if ( entry != null ) {
+                entry.RemoveBroker( name );
+                if ( !entry.HasBrokers() ) {
+                    topicBrokers.Remove( entry );
+                }
+            }
+        }
+
+        public TopicBrokers FindTopic( string topic ) {
+            return topicBrokers.Find( n => n.topic == topic );
+        }
+
+        public bool HasTopic( string topic ) {
+            return topicBrokers.Exists( n => n.topic == topic );
+        }
+    }
+
+    class RemoteBroker : MarshalByRefObject, IBroker, IPuppetBroker, IPuppetProcess {
+
+        public delegate void SendContentDelegate( Event ev );
 
         // Non-interface methods
-        public static void PublishAsyncCallBack(IAsyncResult ar)
-        {
+        public static void PublishAsyncCallBack( IAsyncResult ar ) {
             SendContentDelegate del = (SendContentDelegate)((AsyncResult)ar).AsyncDelegate;
-            del.EndInvoke(ar);
+            del.EndInvoke( ar );
             return;
         }
 
 
         //PuppetMaster
-        public void RegisterChild( string address ) {
-            Broker.children.Add((IBroker)Activator.GetObject(
-               typeof(IBroker),
-               address));
+        public void RegisterChild( string address, string name ) {
+            Broker.children.Add( new NamedBroker( name, (IBroker)Activator.GetObject(
+               typeof( IBroker ),
+               address ) ) );
 
-            Console.WriteLine("I have a kid");
+            Console.WriteLine( "I have a kid" );
         }
 
         public void RegisterParent( string address ) {
 
             Broker.parent = (IBroker)Activator.GetObject(
-               typeof(IBroker),
-               address);
+               typeof( IBroker ),
+               address );
 
-            Console.WriteLine("I have a parent");
+            Console.WriteLine( "I have a parent" );
         }
 
         public void RegisterPublisher( string address ) {
-            Broker.publishers.Add((IPublisher)Activator.GetObject(
-               typeof(IPublisher),
-               address));
+            Broker.publishers.Add( (IPublisher)Activator.GetObject(
+               typeof( IPublisher ),
+               address ) );
 
-            Console.WriteLine("I have a publisher");
+            Console.WriteLine( "I have a publisher" );
         }
 
-        public void RegisterSubscriber( string address ) {
-            Broker.subscribers.Add((ISubscriber)Activator.GetObject(
-               typeof(ISubscriber),
-               address));
+        public void RegisterSubscriber( string address, string name ) {
+            Broker.subscribers.Add( new NamedSubscriber( name, (ISubscriber)Activator.GetObject(
+               typeof( ISubscriber ),
+               address ) ) );
 
-            Console.WriteLine("I have a subscriber");
+            Console.WriteLine( "I have a subscriber" );
         }
 
         public void Status() {
@@ -78,14 +191,13 @@ namespace SESDAD
         }
 
         //Broker
-        public void SendContent(Event evt)
-        { 
+        public void SendContent( Event evt ) {
             //Devo fazer 1 chamada asyncrona para cada subscriber ou 1 para todos????????
             //??????????????????????
             //????????????????
-            SendContentDelegate del = new SendContentDelegate(Broker.SendContent);
-            AsyncCallback remoteCallback = new AsyncCallback(PublishAsyncCallBack);
-            IAsyncResult remAr = del.BeginInvoke(evt, remoteCallback, null);
+            SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
+            AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
+            IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
 
             /*Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
 
@@ -100,27 +212,74 @@ namespace SESDAD
             }*/
         }
 
-        public void SendContentUp(Event evt)
-        {
-            System.Console.WriteLine("Up");
+        public void SendContentUp( Event evt ) {
+            System.Console.WriteLine( "Up" );
 
-            if (Broker.parent != null)
-            {
-                SendContentDelegate del = new SendContentDelegate(Broker.parent.SendContentUp);
-                AsyncCallback remoteCallback = new AsyncCallback(PublishAsyncCallBack);
-                IAsyncResult remAr = del.BeginInvoke(evt, remoteCallback, null);
+            if ( Broker.parent != null ) {
+                SendContentDelegate del = new SendContentDelegate( Broker.parent.SendContentUp );
+                AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
+                IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
             }
-            else
-            {
-                SendContentDelegate del = new SendContentDelegate(Broker.SendContent);
-                AsyncCallback remoteCallback = new AsyncCallback(PublishAsyncCallBack);
-                IAsyncResult remAr = del.BeginInvoke(evt, remoteCallback, null);
+            else {
+                SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
+                AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
+                IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
             }
         }
 
-        public void Subscribe()
-        {
-          //  throw new NotImplementedException();
+        public void Subscribe( string processname, string topic ) {
+            ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
+            if ( sub != null ) {
+                Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
+                Broker.topicSubscribers.AddTopicSubscriber( topic, processname, sub );
+
+                if ( Broker.parent != null ) {
+                    Broker.parent.SubscribeBroker( Broker.name, topic );
+                }
+            }
+        }
+        public void Unsubscribe( string processname, string topic ) {
+            ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
+            if ( sub != null ) {
+                Console.WriteLine( processname + " just unsubscribed from " + topic );
+                Broker.topicSubscribers.RemoveTopicSubscriber( topic, processname );
+
+                if ( Broker.parent != null ) {
+                    bool a = !Broker.topicSubscribers.HasTopic( topic );
+                    bool b = !Broker.topicBrokers.HasTopic( topic );
+                    Console.WriteLine( "Has Topic Subs? " + a.ToString() + "   Has Topic Bros? " + b.ToString() );
+                    if ( a && b ) {
+                        Broker.parent.UnsubscribeBroker( Broker.name, topic );
+                    }
+                }
+            }
+        }
+        public void SubscribeBroker( string processname, string topic ) {
+            IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
+            if ( bro != null ) {
+                Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
+                Broker.topicBrokers.AddTopicBroker( topic, processname, bro );
+
+                if ( Broker.parent != null ) {
+                    Broker.parent.SubscribeBroker( Broker.name, topic );
+                }
+            }
+        }
+        public void UnsubscribeBroker( string processname, string topic ) {
+            IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
+            if ( bro != null ) {
+                Console.WriteLine( "BRO " + processname + " just unsubscribed from " + topic );
+                Broker.topicBrokers.RemoveTopicBroker( topic, processname );
+
+                if ( Broker.parent != null ) {
+                    bool a = !Broker.topicSubscribers.HasTopic( topic );
+                    bool b = !Broker.topicBrokers.HasTopic( topic );
+                    Console.WriteLine( "Has Topic Subs? " + a.ToString() + "   Has Topic Bros? " + b.ToString() );
+                    if ( a && b ) {
+                        Broker.parent.UnsubscribeBroker( Broker.name, topic );
+                    }
+                }
+            }
         }
 
         public void RegisterPuppetMaster(string address)
@@ -136,13 +295,16 @@ namespace SESDAD
     {
         static public List<IPublisher> publishers = new List<IPublisher>();
 
-        static public List<ISubscriber> subscribers = new List<ISubscriber>();
+        static public List<NamedSubscriber> subscribers = new List<NamedSubscriber>();
 
-        static public List<IBroker> children = new List<IBroker>();
+        static public List<NamedBroker> children = new List<NamedBroker>();
 
         static public IBroker parent;
 
         static public IPuppetMaster puppetMaster;
+
+        static public TopicSubscriberList topicSubscribers = new TopicSubscriberList();
+        static public TopicBrokerList topicBrokers = new TopicBrokerList();
 
         static public string name;
 

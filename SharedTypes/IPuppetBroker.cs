@@ -4,11 +4,11 @@ using System.Text;
 
 namespace SESDAD {
     public interface IPuppetBroker {
-        void RegisterSubscriber( string address );
+        void RegisterSubscriber( string address, string name );
         void RegisterPublisher( string address );
 
         void RegisterParent( string address );
-        void RegisterChild( string address );
+        void RegisterChild( string address, string name );
 
         /*void Status();
 
