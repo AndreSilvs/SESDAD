@@ -11,11 +11,17 @@ namespace SESDAD
     {
         public string Topic;
         public string Content;
+        public string PublisherName;
+        public int TopicEventNum;
+        public int EventCounter;
 
-        public Event(string topic, string content )
+        public Event(string topic, string content, string publisherName, int eventNum, int counter )
         {
             Topic = topic;
             Content = content;
+            PublisherName = publisherName;
+            TopicEventNum = eventNum;
+            EventCounter = counter;
         }
     }
 }

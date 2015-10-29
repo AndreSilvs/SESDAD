@@ -1,0 +1,17 @@
+TODO LIST
+
+= Checklist principal
+- Filtering
+- Vários puppet masters (Em várias máquinas)
+- Fifo
+
+= Comandos do puppet master para os sub-processos
+- Freeze, Unfreeze
+	- por as coisas num semaforo
+- Crash
+- Status
+
+= Configuration File
+- Activar logging (Full, Light)
+- Activar routing (Flooding, Filtering)
+- Activar ordering (No, Fifo)

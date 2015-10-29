@@ -12,26 +12,10 @@ using System.Threading;
 
 namespace SESDAD
 {
+    public delegate void PublishPuppetLog( string message );
+    public delegate void PublishTopicDelegate( Event ev );
+
     class RemotePublisher : MarshalByRefObject, IPuppetPublisher, IPuppetProcess, IPublisher {
-
-        public delegate void PublishPuppetLog( string message );
-        public delegate void PublishTopicDelegate( Event ev );
-
-        // Non-interface methods
-        public static void PublishAsyncCallBack( IAsyncResult ar ) {
-            PublishTopicDelegate del = (PublishTopicDelegate)((AsyncResult)ar).AsyncDelegate;
-            del.EndInvoke( ar );
-            return;
-        }
-
-        public static void PublishLogCallBack( IAsyncResult ar ) {
-            PublishPuppetLog del = (PublishPuppetLog)((AsyncResult)ar).AsyncDelegate;
-            del.EndInvoke( ar );
-            return;
-        }
-
-
-        //----------------------
 
         public void RegisterBroker( string address ) {
             Publisher.broker = (IBroker)Activator.GetObject(
@@ -42,16 +26,8 @@ namespace SESDAD
         }
 
         public void ForcePublish( int numberEvents, string topicname, int interval_ms ) {
-            //Publisher.broker.SendContent(new Event(topicname,"banana"));
-            PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContentUp );
-            AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
-            IAsyncResult remAr = del.BeginInvoke( new Event(topicname,"banana" ), remoteCallback, null );
-
-            //Publisher.puppetMaster.Log( "PubEvent" );
-            PublishPuppetLog logDel = new PublishPuppetLog( Publisher.puppetMaster.Log );
-            AsyncCallback remoteCallbackLog = new AsyncCallback( PublishLogCallBack );
-            IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent " + Publisher.name + " banana",remoteCallbackLog, null );
-
+            Console.WriteLine( "Publishing: " + numberEvents.ToString() + " " + topicname + " " + interval_ms.ToString() );
+            new Task(() => { Publisher.PublishEvents( numberEvents, topicname, interval_ms ); } ).Start();
         }
 
         public void Status() {
@@ -86,6 +62,34 @@ namespace SESDAD
         static public string name;
 
         static public IPuppetMaster puppetMaster;
+
+        public static void PublishAsyncCallBack( IAsyncResult ar ) {
+            PublishTopicDelegate del = (PublishTopicDelegate)((AsyncResult)ar).AsyncDelegate;
+            del.EndInvoke( ar );
+            return;
+        }
+
+        public static void PublishLogCallBack( IAsyncResult ar ) {
+            PublishPuppetLog del = (PublishPuppetLog)((AsyncResult)ar).AsyncDelegate;
+            del.EndInvoke( ar );
+            return;
+        }
+
+        public static void PublishEvents( int numberEvents, string topic, int interval_ms ) {
+            for ( int i = 0; i < numberEvents; ++i ) {
+                //Publisher.broker.SendContent(new Event(topicname,"banana"));
+                PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContentUp );
+                AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
+                IAsyncResult remAr = del.BeginInvoke( new Event( topic, "banana", Publisher.name, i, 0 ), remoteCallback, null );
+
+                Thread.Sleep( interval_ms );
+
+                //Publisher.puppetMaster.Log( "PubEvent" );
+                PublishPuppetLog logDel = new PublishPuppetLog( Publisher.puppetMaster.Log );
+                AsyncCallback remoteCallbackLog = new AsyncCallback( PublishLogCallBack );
+                IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent " + Publisher.name + ", " + topic + ", " + i.ToString(), remoteCallbackLog, null );
+            }
+        }
 
         static void Main(string[] args)
         {

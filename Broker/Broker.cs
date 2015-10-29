@@ -199,9 +199,9 @@ namespace SESDAD
             AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
             IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
 
-            /*Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
+            new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
 
-            foreach (ISubscriber coiso in Broker.subscribers)
+            /*foreach (ISubscriber coiso in Broker.subscribers)
             {
                 coiso.ReceiveContent(evt);
             }
@@ -216,11 +216,13 @@ namespace SESDAD
             System.Console.WriteLine( "Up" );
 
             if ( Broker.parent != null ) {
+                Console.WriteLine( "Calling send up" );
                 SendContentDelegate del = new SendContentDelegate( Broker.parent.SendContentUp );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
             }
             else {
+                Console.WriteLine( "Calling send down" );
                 SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
@@ -346,14 +348,14 @@ namespace SESDAD
 
             //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
 
-            foreach (ISubscriber coiso in Broker.subscribers)
+            foreach ( NamedSubscriber coiso in Broker.subscribers)
             {
-                coiso.ReceiveContent(evt);
+                coiso.subcriber.ReceiveContent(evt);
             }
 
-            foreach (IBroker coiso in Broker.children)
+            foreach ( NamedBroker coiso in Broker.children)
             {
-                coiso.SendContent(evt);
+                coiso.broker.SendContent(evt);
             }
         }
 

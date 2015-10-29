@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
@@ -306,6 +307,10 @@ namespace SESDAD {
                     else if ( command.type == FileParsing.CommandType.Unfreeze ) {
                     }
                     else if ( command.type == FileParsing.CommandType.Wait ) {
+                        int time = Int32.Parse( command.properties[ 0 ] );
+                        Console.WriteLine( "Waiting: " + command.properties[ 0 ] + "ms" );
+                        Thread.Sleep( time );
+                        Console.WriteLine( "Waited." );
                     }
 
                     // Test prints TODO: Remove
