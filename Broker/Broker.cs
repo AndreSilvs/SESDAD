@@ -213,16 +213,14 @@ namespace SESDAD
         }
 
         public void SendContentUp( Event evt ) {
-            System.Console.WriteLine( "Up" );
 
             if ( Broker.parent != null ) {
-                Console.WriteLine( "Calling send up" );
+               // System.Console.WriteLine(evt.EventCounter);
                 SendContentDelegate del = new SendContentDelegate( Broker.parent.SendContentUp );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
             }
             else {
-                Console.WriteLine( "Calling send down" );
                 SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
@@ -344,7 +342,7 @@ namespace SESDAD
         static public void SendContent(Event evt)
         {
 
-            System.Console.WriteLine("Down");
+            System.Console.WriteLine(evt.EventCounter);
 
             //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
 
