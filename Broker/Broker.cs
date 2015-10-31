@@ -62,7 +62,7 @@ namespace SESDAD
 
     public class TopicSubscriberList {
 
-        private List<TopicSubscribers> topicSubscribers = new List<TopicSubscribers>();
+        public List<TopicSubscribers> topicSubscribers = new List<TopicSubscribers>();
 
         public void AddTopicSubscriber( string topic, string name, ISubscriber sub ) {
             TopicSubscribers entry = FindTopic( topic );
@@ -96,7 +96,7 @@ namespace SESDAD
 
     public class TopicBrokerList {
 
-        private List<TopicBrokers> topicBrokers = new List<TopicBrokers>();
+        public List<TopicBrokers> topicBrokers = new List<TopicBrokers>();
 
         public void AddTopicBroker( string topic, string name, IBroker bro ) {
             TopicBrokers entry = FindTopic( topic );
@@ -146,7 +146,7 @@ namespace SESDAD
                typeof( IBroker ),
                address ) ) );
 
-            Console.WriteLine( "I have a kid" );
+            //Console.WriteLine( "I have a kid" );
         }
 
         public void RegisterParent( string address ) {
@@ -155,7 +155,7 @@ namespace SESDAD
                typeof( IBroker ),
                address );
 
-            Console.WriteLine( "I have a parent" );
+            //Console.WriteLine( "I have a parent" );
         }
 
         public void RegisterPublisher( string address ) {
@@ -163,7 +163,7 @@ namespace SESDAD
                typeof( IPublisher ),
                address ) );
 
-            Console.WriteLine( "I have a publisher" );
+           // Console.WriteLine( "I have a publisher" );
         }
 
         public void RegisterSubscriber( string address, string name ) {
@@ -171,11 +171,21 @@ namespace SESDAD
                typeof( ISubscriber ),
                address ) ) );
 
-            Console.WriteLine( "I have a subscriber" );
+           // Console.WriteLine( "I have a subscriber" );
         }
 
         public void Status() {
-            throw new NotImplementedException();
+            Console.WriteLine("I'm " + Broker.name);
+            Console.WriteLine("I'm alive");
+            Console.WriteLine("Subscriptions:");
+            foreach (TopicSubscribers x in Broker.topicSubscribers.topicSubscribers)
+            {
+                Console.WriteLine(x.topic);
+            }
+            foreach (TopicBrokers x in Broker.topicBrokers.topicBrokers)
+            {
+                Console.WriteLine(x.topic);
+            }
         }
 
         public void Crash() {
@@ -288,7 +298,7 @@ namespace SESDAD
                typeof(IPuppetMaster),
                address);
 
-            Console.WriteLine("I'm a puppet");
+            //Console.WriteLine("I'm a puppet");
         }
     }
     class Broker
@@ -331,7 +341,7 @@ namespace SESDAD
               WellKnownObjectMode.Singleton);
 
 
-            System.Console.WriteLine("Hi, I'm a broker...");
+            //System.Console.WriteLine("Hi, I'm a broker...");
 
            // addSubscriberToList();
            // SendToSubscribers("banana");

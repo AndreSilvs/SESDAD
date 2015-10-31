@@ -20,7 +20,7 @@ namespace SESDAD
                typeof( IBroker ),
                address );
 
-            Console.WriteLine("I have a ~broker");
+            //Console.WriteLine("I have a ~broker");
         }
 
         public void Crash()
@@ -53,7 +53,10 @@ namespace SESDAD
 
         public void Status()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("I'm " + Subscriber.name);
+            Console.WriteLine("I'm alive");
+
+            //Se os subscribers souberem as suas subscrições por aqui tambem
         }
 
         public void Unfreeze()
@@ -67,7 +70,7 @@ namespace SESDAD
                  typeof(IPuppetMaster),
                  address);
 
-            Console.WriteLine("I'm a puppet");
+            //Console.WriteLine("I'm a puppet");
         }
     }
 
@@ -132,7 +135,7 @@ namespace SESDAD
              "tcp://localhost:8086/broker");*/
 
 
-            System.Console.WriteLine("Hi, I'm a subscriber...");
+            //System.Console.WriteLine("Hi, I'm a subscriber...");
             System.Console.ReadLine();
         }
     }

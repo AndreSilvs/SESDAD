@@ -31,7 +31,8 @@ namespace SESDAD
         }
 
         public void Status() {
-            throw new NotImplementedException();
+            Console.WriteLine("I'm " + Publisher.name);
+            Console.WriteLine("I'm alive");
         }
 
         public void Crash() {
@@ -52,7 +53,7 @@ namespace SESDAD
                 typeof(IPuppetMaster),
                 address);
 
-            Console.WriteLine("I'm a puppet");
+            //Console.WriteLine("I'm a puppet");
         }
     }
 
@@ -131,7 +132,7 @@ namespace SESDAD
 
             broker.SendContent("banana");*/
 
-            System.Console.WriteLine("Hi, I'm a publisher...");
+            //System.Console.WriteLine("Hi, I'm a publisher...");
             System.Console.ReadLine();
         }
     }
