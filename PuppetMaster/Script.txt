@@ -1,3 +1,4 @@
-Publisher publisher1 Publish 5 Ontopic animal Interval 2000
+Subscriber subscriber2 Subscribe /edu/ulisboa/meic
+Subscriber subscriber1 Subscribe /edu/ulisboa/*
 Wait 1000
-Publisher publisher1 Publish 5 Ontopic animal2 Interval 2000
+Publisher publisher0 Publish 1 Ontopic /edu/ulisboa/meic/dad Interval 0

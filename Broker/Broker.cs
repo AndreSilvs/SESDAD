@@ -7,6 +7,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Messaging;
+using System.Text.RegularExpressions;
 using System.Net.Sockets;
 using System.Threading;
 
@@ -88,6 +89,33 @@ namespace SESDAD
         public TopicSubscribers FindTopic( string topic ) {
             return topicSubscribers.Find( n => n.topic == topic );
         }
+        public HashSet<NamedSubscriber> FindAllSubscribers( string topic ) {
+            HashSet<NamedSubscriber> subs = new HashSet<NamedSubscriber>();
+
+            // Topic may be:  "/edu/ulisboa"
+            // Sub topic may be "/edu/*"
+            // So we're checking if the topic fits in the subscribed sub topic
+            foreach ( TopicSubscribers subTopic in topicSubscribers ) {
+                bool match = false;
+                if ( subTopic.topic == topic ) {
+                    match = true;
+                }
+                else if ( subTopic.topic.EndsWith( "/*" ) ) {
+                    string regexTopic = "^" + subTopic.topic.Substring( 0, subTopic.topic.Length - 1 ) + ".*$";
+                    Regex regex = new Regex( regexTopic );
+                    if ( regex.IsMatch( topic ) ) {
+                        match = true;
+                    }
+                }
+
+                if ( match ) {
+                    foreach ( NamedSubscriber sub in subTopic.subscribers ) {
+                        subs.Add( sub );
+                    }
+                }
+            }
+            return subs;
+        }
 
         public bool HasTopic( string topic ) {
             return topicSubscribers.Exists( n => n.topic == topic );
@@ -121,6 +149,33 @@ namespace SESDAD
 
         public TopicBrokers FindTopic( string topic ) {
             return topicBrokers.Find( n => n.topic == topic );
+        }
+        public HashSet<NamedBroker> FindAllBrokers( string topic ) {
+            HashSet<NamedBroker> bros = new HashSet<NamedBroker>();
+
+            // Topic may be:  "/edu/ulisboa"
+            // Sub topic may be "/edu/*"
+            // So we're checking if the topic fits in the subscribed sub topic
+            foreach ( TopicBrokers broTopic in topicBrokers ) {
+                bool match = false;
+                if ( broTopic.topic == topic ) {
+                    match = true;
+                }
+                else if ( broTopic.topic.EndsWith( "/*" ) ) {
+                    string regexTopic = "^" + broTopic.topic.Substring( 0, broTopic.topic.Length - 1 ) + ".*$";
+                    Regex regex = new Regex( regexTopic );
+                    if ( regex.IsMatch( topic ) ) {
+                        match = true;
+                    }
+                }
+
+                if ( match ) {
+                    foreach ( NamedBroker bro in broTopic.brokers ) {
+                        bros.Add( bro );
+                    }
+                }
+            }
+            return bros;
         }
 
         public bool HasTopic( string topic ) {
@@ -356,14 +411,31 @@ namespace SESDAD
 
             //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
 
-            foreach ( NamedSubscriber coiso in Broker.subscribers)
+            // Filtering
+            SendContentFiltering( evt );
+
+            // Flooding
+            /*foreach ( NamedSubscriber coiso in Broker.subscribers)
             {
                 coiso.subcriber.ReceiveContent(evt);
-            }
+            }*/
 
-            foreach ( NamedBroker coiso in Broker.children)
+            /*foreach ( NamedBroker coiso in Broker.children)
             {
                 coiso.broker.SendContent(evt);
+            }*/
+        }
+
+        static public void SendContentFiltering( Event evt ) {
+            Console.WriteLine( "Filtering" );
+            var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
+            foreach ( NamedSubscriber sub in subs ) {
+                sub.subcriber.ReceiveContent( evt );
+            }
+
+            var bros = topicBrokers.FindAllBrokers( evt.Topic );
+            foreach ( NamedBroker bro in bros ) {
+                bro.broker.SendContent( evt );
             }
         }
 
