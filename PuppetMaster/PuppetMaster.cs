@@ -22,6 +22,42 @@ namespace SESDAD {
         {
             PuppetMaster.LogMessage( message );
         }
+
+        public void CreateBroker(string args)
+        {
+            Process newProcess = new Process();
+
+            // Configure the process using the StartInfo properties.
+            newProcess.StartInfo.FileName = @"..\..\..\Broker\bin\Debug\Broker.exe";
+
+            // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
+            newProcess.StartInfo.Arguments = args;
+            newProcess.Start();
+        }
+
+        public void CreatePublisher(string args)
+        {
+            Process newProcess = new Process();
+
+            // Configure the process using the StartInfo properties.
+            newProcess.StartInfo.FileName = @"..\..\..\Publisher\bin\Debug\Publisher.exe";
+
+            // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
+            newProcess.StartInfo.Arguments = args;
+            newProcess.Start();
+        }
+
+        public void CreateSubscriber(string args)
+        {
+            Process newProcess = new Process();
+
+            // Configure the process using the StartInfo properties.
+            newProcess.StartInfo.FileName = @"..\..\..\Subscriber\bin\Debug\Subscriber.exe";
+
+            // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
+            newProcess.StartInfo.Arguments = args;
+            newProcess.Start();
+        }
     }
 
 
@@ -48,7 +84,7 @@ namespace SESDAD {
             return;
         }
 
-        static string pmAddress = "tcp://localhost:8080/puppetmaster";
+        static string pmAddress = "tcp://localhost:30000/puppet";
 
         static Dictionary<String, IPuppetSubscriber> subscribers = new Dictionary<String, IPuppetSubscriber>();
         static Dictionary<String, IPuppetPublisher> publishers = new Dictionary<String, IPuppetPublisher>();
@@ -58,12 +94,12 @@ namespace SESDAD {
         static void Main( string[] args ) {
             System.IO.File.WriteAllText( @"log.txt", string.Empty );
 
-            TcpChannel channel = new TcpChannel( 8080 );
+            TcpChannel channel = new TcpChannel( 30000 );
             ChannelServices.RegisterChannel( channel, true );
 
             RemotingConfiguration.RegisterWellKnownServiceType(
               typeof(RemotePuppetMaster),
-              "puppetmaster",
+              "puppet",
               WellKnownObjectMode.Singleton);
 
             FileParsing.ConfigurationData config = null;
@@ -84,15 +120,24 @@ namespace SESDAD {
             Console.WriteLine( "Creating processes.." );
 
             foreach ( FileParsing.Process processData in config.processes ) {
-                Process newProcess = new Process();
+                //Process newProcess = new Process();
 
                 if ( processData.type == FileParsing.ProcessType.Broker ) {
                     // Configure the process using the StartInfo properties.
-                    newProcess.StartInfo.FileName = @"..\..\..\Broker\bin\Debug\Broker.exe";
+                    //newProcess.StartInfo.FileName = @"..\..\..\Broker\bin\Debug\Broker.exe";
 
                     // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
-                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name;
-                    newProcess.Start();
+                    //newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name;
+                    //newProcess.Start();
+
+                    string arguments = processData.port + " " + processData.serviceName + " " + processData.name;
+
+                    //Puppetmaster com o ip do processo
+                    IPuppetMaster pup = (IPuppetMaster)Activator.GetObject(
+                                                typeof(IPuppetMaster),
+                                                "tcp://" + processData.ip + ":30000/puppet");
+
+                    pup.CreateBroker(arguments);
 
                     IPuppetBroker obj = (IPuppetBroker)Activator.GetObject(
                                               typeof(IPuppetBroker),
@@ -103,11 +148,20 @@ namespace SESDAD {
                 }
                 else if ( processData.type == FileParsing.ProcessType.Publisher ) {
                     // Configure the process using the StartInfo properties.
-                    newProcess.StartInfo.FileName = @"..\..\..\Publisher\bin\Debug\Publisher.exe";
+                    //newProcess.StartInfo.FileName = @"..\..\..\Publisher\bin\Debug\Publisher.exe";
 
                     // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
-                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name; 
-                    newProcess.Start();
+                    //newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name;
+                    //newProcess.Start();
+
+                    string arguments = processData.port + " " + processData.serviceName + " " + processData.name;
+
+                    //Puppetmaster com o ip do processo
+                    IPuppetMaster pup = (IPuppetMaster)Activator.GetObject(
+                                                typeof(IPuppetMaster),
+                                                "tcp://" + processData.ip + ":30000/puppet");
+
+                    pup.CreatePublisher(arguments);
 
                     IPuppetPublisher obj = (IPuppetPublisher)Activator.GetObject(
                                               typeof(IPuppetPublisher),
@@ -118,11 +172,20 @@ namespace SESDAD {
                 }
                 else if ( processData.type == FileParsing.ProcessType.Subscriber ) {
                     // Configure the process using the StartInfo properties.
-                    newProcess.StartInfo.FileName = @"..\..\..\Subscriber\bin\Debug\Subscriber.exe";
+                    //newProcess.StartInfo.FileName = @"..\..\..\Subscriber\bin\Debug\Subscriber.exe";
 
                     // Como vamos ter que criar o canal de TCP com o porto, passamos aqui o endereco
-                    newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name;
-                    newProcess.Start();
+                    //newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name;
+                    //newProcess.Start();
+
+                    string arguments = processData.port + " " + processData.serviceName + " " + processData.name;
+
+                    //Puppetmaster com o ip do processo
+                    IPuppetMaster pup = (IPuppetMaster)Activator.GetObject(
+                                                typeof(IPuppetMaster),
+                                                "tcp://" + processData.ip + ":30000/puppet");
+
+                    pup.CreateSubscriber(arguments);
 
                     IPuppetSubscriber obj = (IPuppetSubscriber)Activator.GetObject(
                                                typeof(IPuppetSubscriber),
