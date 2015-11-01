@@ -7,6 +7,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Messaging;
+using System.Text.RegularExpressions;
 using System.Net.Sockets;
 using System.Threading;
 
@@ -62,7 +63,7 @@ namespace SESDAD
 
     public class TopicSubscriberList {
 
-        private List<TopicSubscribers> topicSubscribers = new List<TopicSubscribers>();
+        public List<TopicSubscribers> topicSubscribers = new List<TopicSubscribers>();
 
         public void AddTopicSubscriber( string topic, string name, ISubscriber sub ) {
             TopicSubscribers entry = FindTopic( topic );
@@ -88,6 +89,33 @@ namespace SESDAD
         public TopicSubscribers FindTopic( string topic ) {
             return topicSubscribers.Find( n => n.topic == topic );
         }
+        public HashSet<NamedSubscriber> FindAllSubscribers( string topic ) {
+            HashSet<NamedSubscriber> subs = new HashSet<NamedSubscriber>();
+
+            // Topic may be:  "/edu/ulisboa"
+            // Sub topic may be "/edu/*"
+            // So we're checking if the topic fits in the subscribed sub topic
+            foreach ( TopicSubscribers subTopic in topicSubscribers ) {
+                bool match = false;
+                if ( subTopic.topic == topic ) {
+                    match = true;
+                }
+                else if ( subTopic.topic.EndsWith( "/*" ) ) {
+                    string regexTopic = "^" + subTopic.topic.Substring( 0, subTopic.topic.Length - 1 ) + ".*$";
+                    Regex regex = new Regex( regexTopic );
+                    if ( regex.IsMatch( topic ) ) {
+                        match = true;
+                    }
+                }
+
+                if ( match ) {
+                    foreach ( NamedSubscriber sub in subTopic.subscribers ) {
+                        subs.Add( sub );
+                    }
+                }
+            }
+            return subs;
+        }
 
         public bool HasTopic( string topic ) {
             return topicSubscribers.Exists( n => n.topic == topic );
@@ -96,7 +124,7 @@ namespace SESDAD
 
     public class TopicBrokerList {
 
-        private List<TopicBrokers> topicBrokers = new List<TopicBrokers>();
+        public List<TopicBrokers> topicBrokers = new List<TopicBrokers>();
 
         public void AddTopicBroker( string topic, string name, IBroker bro ) {
             TopicBrokers entry = FindTopic( topic );
@@ -122,6 +150,33 @@ namespace SESDAD
         public TopicBrokers FindTopic( string topic ) {
             return topicBrokers.Find( n => n.topic == topic );
         }
+        public HashSet<NamedBroker> FindAllBrokers( string topic ) {
+            HashSet<NamedBroker> bros = new HashSet<NamedBroker>();
+
+            // Topic may be:  "/edu/ulisboa"
+            // Sub topic may be "/edu/*"
+            // So we're checking if the topic fits in the subscribed sub topic
+            foreach ( TopicBrokers broTopic in topicBrokers ) {
+                bool match = false;
+                if ( broTopic.topic == topic ) {
+                    match = true;
+                }
+                else if ( broTopic.topic.EndsWith( "/*" ) ) {
+                    string regexTopic = "^" + broTopic.topic.Substring( 0, broTopic.topic.Length - 1 ) + ".*$";
+                    Regex regex = new Regex( regexTopic );
+                    if ( regex.IsMatch( topic ) ) {
+                        match = true;
+                    }
+                }
+
+                if ( match ) {
+                    foreach ( NamedBroker bro in broTopic.brokers ) {
+                        bros.Add( bro );
+                    }
+                }
+            }
+            return bros;
+        }
 
         public bool HasTopic( string topic ) {
             return topicBrokers.Exists( n => n.topic == topic );
@@ -146,7 +201,7 @@ namespace SESDAD
                typeof( IBroker ),
                address ) ) );
 
-            Console.WriteLine( "I have a kid" );
+            //Console.WriteLine( "I have a kid" );
         }
 
         public void RegisterParent( string address ) {
@@ -155,7 +210,7 @@ namespace SESDAD
                typeof( IBroker ),
                address );
 
-            Console.WriteLine( "I have a parent" );
+            //Console.WriteLine( "I have a parent" );
         }
 
         public void RegisterPublisher( string address ) {
@@ -163,7 +218,7 @@ namespace SESDAD
                typeof( IPublisher ),
                address ) );
 
-            Console.WriteLine( "I have a publisher" );
+           // Console.WriteLine( "I have a publisher" );
         }
 
         public void RegisterSubscriber( string address, string name ) {
@@ -171,11 +226,21 @@ namespace SESDAD
                typeof( ISubscriber ),
                address ) ) );
 
-            Console.WriteLine( "I have a subscriber" );
+           // Console.WriteLine( "I have a subscriber" );
         }
 
         public void Status() {
-            throw new NotImplementedException();
+            Console.WriteLine("I'm " + Broker.name);
+            Console.WriteLine("I'm alive");
+            Console.WriteLine("Subscriptions:");
+            foreach (TopicSubscribers x in Broker.topicSubscribers.topicSubscribers)
+            {
+                Console.WriteLine(x.topic);
+            }
+            foreach (TopicBrokers x in Broker.topicBrokers.topicBrokers)
+            {
+                Console.WriteLine(x.topic);
+            }
         }
 
         public void Crash() {
@@ -213,16 +278,14 @@ namespace SESDAD
         }
 
         public void SendContentUp( Event evt ) {
-            System.Console.WriteLine( "Up" );
 
             if ( Broker.parent != null ) {
-                Console.WriteLine( "Calling send up" );
+               // System.Console.WriteLine(evt.EventCounter);
                 SendContentDelegate del = new SendContentDelegate( Broker.parent.SendContentUp );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
             }
             else {
-                Console.WriteLine( "Calling send down" );
                 SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
@@ -290,7 +353,7 @@ namespace SESDAD
                typeof(IPuppetMaster),
                address);
 
-            Console.WriteLine("I'm a puppet");
+            //Console.WriteLine("I'm a puppet");
         }
     }
     class Broker
@@ -333,7 +396,7 @@ namespace SESDAD
               WellKnownObjectMode.Singleton);
 
 
-            System.Console.WriteLine("Hi, I'm a broker...");
+            //System.Console.WriteLine("Hi, I'm a broker...");
 
            // addSubscriberToList();
            // SendToSubscribers("banana");
@@ -344,18 +407,35 @@ namespace SESDAD
         static public void SendContent(Event evt)
         {
 
-            System.Console.WriteLine("Down");
+            System.Console.WriteLine(evt.EventCounter);
 
             //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
 
-            foreach ( NamedSubscriber coiso in Broker.subscribers)
+            // Filtering
+            SendContentFiltering( evt );
+
+            // Flooding
+            /*foreach ( NamedSubscriber coiso in Broker.subscribers)
             {
                 coiso.subcriber.ReceiveContent(evt);
-            }
+            }*/
 
-            foreach ( NamedBroker coiso in Broker.children)
+            /*foreach ( NamedBroker coiso in Broker.children)
             {
                 coiso.broker.SendContent(evt);
+            }*/
+        }
+
+        static public void SendContentFiltering( Event evt ) {
+            Console.WriteLine( "Filtering" );
+            var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
+            foreach ( NamedSubscriber sub in subs ) {
+                sub.subcriber.ReceiveContent( evt );
+            }
+
+            var bros = topicBrokers.FindAllBrokers( evt.Topic );
+            foreach ( NamedBroker bro in bros ) {
+                bro.broker.SendContent( evt );
             }
         }
 

@@ -362,6 +362,11 @@ namespace SESDAD {
                         IAsyncResult remAr = del.BeginInvoke( Int32.Parse( command.properties[ 1 ] ), command.properties[ 2 ], Int32.Parse( command.properties[ 3 ] ), remoteCallback, null );
                     }
                     else if ( command.type == FileParsing.CommandType.Status ) {
+                        foreach(var p in PuppetMaster.processes)
+                        {
+                            var obj = p.Value;
+                            obj.Status();
+                        }
                     }
                     else if ( command.type == FileParsing.CommandType.Crash ) {
                     }

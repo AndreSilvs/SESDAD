@@ -31,7 +31,8 @@ namespace SESDAD
         }
 
         public void Status() {
-            throw new NotImplementedException();
+            Console.WriteLine("I'm " + Publisher.name);
+            Console.WriteLine("I'm alive");
         }
 
         public void Crash() {
@@ -52,7 +53,7 @@ namespace SESDAD
                 typeof(IPuppetMaster),
                 address);
 
-            Console.WriteLine("I'm a puppet");
+            //Console.WriteLine("I'm a puppet");
         }
     }
 
@@ -60,6 +61,9 @@ namespace SESDAD
     {
         static public IBroker broker;
         static public string name;
+
+        static int count = 0;
+        static object lockObject = new object();
 
         static public IPuppetMaster puppetMaster;
 
@@ -80,7 +84,7 @@ namespace SESDAD
                 //Publisher.broker.SendContent(new Event(topicname,"banana"));
                 PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContentUp );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
-                IAsyncResult remAr = del.BeginInvoke( new Event( topic, "banana", Publisher.name, i, 0 ), remoteCallback, null );
+                IAsyncResult remAr = del.BeginInvoke( new Event( topic, "banana", Publisher.name, i, getCountAndIncrement() ), remoteCallback, null );
 
                 Thread.Sleep( interval_ms );
 
@@ -88,6 +92,14 @@ namespace SESDAD
                 PublishPuppetLog logDel = new PublishPuppetLog( Publisher.puppetMaster.Log );
                 AsyncCallback remoteCallbackLog = new AsyncCallback( PublishLogCallBack );
                 IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent " + Publisher.name + ", " + topic + ", " + i.ToString(), remoteCallbackLog, null );
+            }
+        }
+
+        static int getCountAndIncrement()
+        {
+            lock (lockObject)
+            {
+                return count++;
             }
         }
 
@@ -120,7 +132,7 @@ namespace SESDAD
 
             broker.SendContent("banana");*/
 
-            System.Console.WriteLine("Hi, I'm a publisher...");
+            //System.Console.WriteLine("Hi, I'm a publisher...");
             System.Console.ReadLine();
         }
     }
