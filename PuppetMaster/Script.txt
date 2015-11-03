@@ -1,4 +1,6 @@
 Subscriber subscriber2 Subscribe /edu/ulisboa/meic
 Subscriber subscriber1 Subscribe /edu/ulisboa/*
 Wait 1000
-Publisher publisher0 Publish 1 Ontopic /edu/ulisboa/meic/dad Interval 0
+Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500
+Wait 1000
+Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500

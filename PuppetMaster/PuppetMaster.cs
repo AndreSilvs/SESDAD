@@ -130,7 +130,7 @@ namespace SESDAD {
                     //newProcess.StartInfo.Arguments = processData.port + " " + processData.serviceName + " " + processData.name;
                     //newProcess.Start();
 
-                    string arguments = processData.port + " " + processData.serviceName + " " + processData.name;
+                    string arguments = processData.port + " " + processData.serviceName + " " + processData.name + " " + config.GetOrdering() + " " + config.GetRoutingPolicy() + " " + config.GetLoggingLevel();
 
                     //Puppetmaster com o ip do processo
                     IPuppetMaster pup = (IPuppetMaster)Activator.GetObject(

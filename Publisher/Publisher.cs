@@ -15,6 +15,12 @@ namespace SESDAD
     public delegate void PublishPuppetLog( string message );
     public delegate void PublishTopicDelegate( Event ev );
 
+
+    struct EventCounter {
+        public int topicCounter;
+        public int globalCounter;
+    }
+
     class RemotePublisher : MarshalByRefObject, IPuppetPublisher, IPuppetProcess, IPublisher {
 
         public void RegisterBroker( string address ) {
@@ -67,6 +73,8 @@ namespace SESDAD
 
         static public IPuppetMaster puppetMaster;
 
+        static Dictionary<string, int> topicCount = new Dictionary<string, int>();
+
         public static void PublishAsyncCallBack( IAsyncResult ar ) {
             PublishTopicDelegate del = (PublishTopicDelegate)((AsyncResult)ar).AsyncDelegate;
             del.EndInvoke( ar );
@@ -84,23 +92,30 @@ namespace SESDAD
                 //Publisher.broker.SendContent(new Event(topicname,"banana"));
                 PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContentUp );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
-                IAsyncResult remAr = del.BeginInvoke( new Event( topic, "banana", Publisher.name, i, getCountAndIncrement() ), remoteCallback, null );
-
-                Thread.Sleep( interval_ms );
+                EventCounter eCounter = getCountAndIncrement( topic );
+                IAsyncResult remAr = del.BeginInvoke( new Event( topic, "banana", Publisher.name, eCounter.topicCounter, eCounter.globalCounter  ), remoteCallback, null );
 
                 //Publisher.puppetMaster.Log( "PubEvent" );
                 PublishPuppetLog logDel = new PublishPuppetLog( Publisher.puppetMaster.Log );
                 AsyncCallback remoteCallbackLog = new AsyncCallback( PublishLogCallBack );
                 IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent " + Publisher.name + ", " + topic + ", " + i.ToString(), remoteCallbackLog, null );
+
+                Thread.Sleep( interval_ms );
             }
         }
 
-        static int getCountAndIncrement()
+        static EventCounter getCountAndIncrement( string topic )
         {
+            EventCounter ec = new EventCounter();
+            if ( !topicCount.ContainsKey( topic ) ) {
+                topicCount.Add( topic, 0 );
+            }
             lock (lockObject)
             {
-                return count++;
+                ec.globalCounter = count++;
+                ec.topicCounter = topicCount[ topic ]++;
             }
+            return ec;
         }
 
         static void Main(string[] args)

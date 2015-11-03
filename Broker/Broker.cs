@@ -264,7 +264,13 @@ namespace SESDAD
             AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
             IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
 
-            new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
+            if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
+                Console.WriteLine( "Logging." );
+                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
+            }
+            else {
+                Console.WriteLine( "Not logging." );
+            }
 
             /*foreach (ISubscriber coiso in Broker.subscribers)
             {
@@ -290,6 +296,10 @@ namespace SESDAD
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
             }
+
+            /*if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
+                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
+            }*/
         }
 
         public void Subscribe( string processname, string topic ) {
@@ -371,11 +381,15 @@ namespace SESDAD
         static public TopicSubscriberList topicSubscribers = new TopicSubscriberList();
         static public TopicBrokerList topicBrokers = new TopicBrokerList();
 
+        static public FileParsing.Ordering ordering = FileParsing.Ordering.Fifo;
+        static public FileParsing.RoutingPolicy routing = FileParsing.RoutingPolicy.Filter;
+        static public FileParsing.LoggingLevel logging = FileParsing.LoggingLevel.Full;
+
         static public string name;
 
         static void Main(string[] args)
         {
-            if ( args.Length != 3 ) {
+            if ( args.Length != 6 ) {
                 return;
             }
 
@@ -386,6 +400,12 @@ namespace SESDAD
             int port; Int32.TryParse( args[ 0 ], out port );
             string serviceName = args[ 1 ];
             Broker.name = args[2];
+            ordering = (args[ 3 ] == "no" ? FileParsing.Ordering.No :
+                (args[ 3 ] == "fifo" ? FileParsing.Ordering.Fifo : FileParsing.Ordering.Total));
+            routing = (args[ 4 ] == "flooding" ? FileParsing.RoutingPolicy.Flooding :
+                FileParsing.RoutingPolicy.Filter);
+            logging = (args[ 5 ] == "light" ? FileParsing.LoggingLevel.Light :
+                FileParsing.LoggingLevel.Full);
 
             TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, true);
@@ -411,19 +431,21 @@ namespace SESDAD
 
             //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
 
-            // Filtering
-            SendContentFiltering( evt );
+            if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
+                // Filtering
+                SendContentFiltering( evt );
 
-            // Flooding
-            /*foreach ( NamedSubscriber coiso in Broker.subscribers)
-            {
-                coiso.subcriber.ReceiveContent(evt);
-            }*/
+            }
+            else {
+                // Flooding
+                foreach ( NamedSubscriber coiso in Broker.subscribers ) {
+                    coiso.subcriber.ReceiveContent( evt );
+                }
 
-            /*foreach ( NamedBroker coiso in Broker.children)
-            {
-                coiso.broker.SendContent(evt);
-            }*/
+                foreach ( NamedBroker coiso in Broker.children ) {
+                    coiso.broker.SendContent( evt );
+                }
+            }
         }
 
         static public void SendContentFiltering( Event evt ) {
