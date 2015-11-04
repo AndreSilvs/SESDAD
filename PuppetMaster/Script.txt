@@ -4,3 +4,4 @@ Wait 1000
 Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500
 Wait 1000
 Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500
+Status

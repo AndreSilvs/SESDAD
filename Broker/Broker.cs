@@ -265,11 +265,7 @@ namespace SESDAD
             IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
 
             if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
-                Console.WriteLine( "Logging." );
                 new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
-            }
-            else {
-                Console.WriteLine( "Not logging." );
             }
 
             /*foreach (ISubscriber coiso in Broker.subscribers)
@@ -322,7 +318,6 @@ namespace SESDAD
                 if ( Broker.parent != null ) {
                     bool a = !Broker.topicSubscribers.HasTopic( topic );
                     bool b = !Broker.topicBrokers.HasTopic( topic );
-                    Console.WriteLine( "Has Topic Subs? " + a.ToString() + "   Has Topic Bros? " + b.ToString() );
                     if ( a && b ) {
                         Broker.parent.UnsubscribeBroker( Broker.name, topic );
                     }
@@ -349,7 +344,6 @@ namespace SESDAD
                 if ( Broker.parent != null ) {
                     bool a = !Broker.topicSubscribers.HasTopic( topic );
                     bool b = !Broker.topicBrokers.HasTopic( topic );
-                    Console.WriteLine( "Has Topic Subs? " + a.ToString() + "   Has Topic Bros? " + b.ToString() );
                     if ( a && b ) {
                         Broker.parent.UnsubscribeBroker( Broker.name, topic );
                     }
@@ -427,7 +421,7 @@ namespace SESDAD
         static public void SendContent(Event evt)
         {
 
-            System.Console.WriteLine(evt.EventCounter);
+            //System.Console.WriteLine(evt.EventCounter);
 
             //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
 
@@ -449,7 +443,6 @@ namespace SESDAD
         }
 
         static public void SendContentFiltering( Event evt ) {
-            Console.WriteLine( "Filtering" );
             var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
             foreach ( NamedSubscriber sub in subs ) {
                 sub.subcriber.ReceiveContent( evt );

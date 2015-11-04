@@ -47,7 +47,7 @@ namespace SESDAD {
                 description.fullInput = command;
 
                 if ( command.StartsWith( "Subscriber" ) ) {
-                    Regex pattern = new Regex( @"Subscriber (?<pname>\w+) (?<type>Subscribe|Unsubscribe) (?<topic>[\w/]+\*?)" );
+                    Regex pattern = new Regex( @"Subscriber (?<pname>\w+) (?<type>Subscribe|Unsubscribe) (?<topic>[\w/-]+\*?)" );
                     Match match = pattern.Match( command );
                     if ( match.Success ) {
                         if ( match.Groups[ "type" ].Value == "Subscribe" ) {
@@ -65,7 +65,7 @@ namespace SESDAD {
                     }
                 }
                 else if ( command.StartsWith( "Publisher" ) ) {
-                    Regex pattern = new Regex( @"Publisher (?<pname>\w+) Publish (?<numevents>\d+) Ontopic (?<topic>[\w/]+) Interval (?<interval>\d+)" );
+                    Regex pattern = new Regex( @"Publisher (?<pname>\w+) Publish (?<numevents>\d+) Ontopic (?<topic>[\w/-]+) Interval (?<interval>\d+)" );
                     Match match = pattern.Match( command );
                     if ( match.Success ) {
                         description.type = CommandType.Publish;

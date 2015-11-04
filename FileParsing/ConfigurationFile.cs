@@ -127,7 +127,7 @@ namespace SESDAD {
                         }
                     }
                     else if ( line.StartsWith( "Ordering" ) ) {
-                        Regex pattern = new Regex( @"Ordering (?<type>(no|fifo|total))" );
+                        Regex pattern = new Regex( @"Ordering (?<type>(NO|FIFO|TOTAL))" );
                         Match match = pattern.Match( line );
                         if ( match.Success ) {
                             string type = match.Groups[ "type" ].Value;
@@ -151,7 +151,7 @@ namespace SESDAD {
                         }
                     }
                     else if ( line.StartsWith( "Process" ) ) {
-                        Regex pattern = new Regex( @"Process (?<name>\w+) Is (?<type>(broker|publisher|subscriber)) On (?<site>\w+) URL (?<url>[\w.:/-]+)" );
+                        Regex pattern = new Regex( @"Process (?<name>\w+) [Ii][Ss] (?<type>(broker|publisher|subscriber)) On (?<site>\w+) URL (?<url>[\w.:/-]+)" );
                         Match match = pattern.Match( line );
 
                         if ( match.Success ) {
