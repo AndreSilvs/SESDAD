@@ -394,11 +394,11 @@ namespace SESDAD
             int port; Int32.TryParse( args[ 0 ], out port );
             string serviceName = args[ 1 ];
             Broker.name = args[2];
-            ordering = (args[ 3 ] == "no" ? FileParsing.Ordering.No :
-                (args[ 3 ] == "fifo" ? FileParsing.Ordering.Fifo : FileParsing.Ordering.Total));
-            routing = (args[ 4 ] == "flooding" ? FileParsing.RoutingPolicy.Flooding :
+            ordering = (args[ 3 ] == "NO" ? FileParsing.Ordering.No :
+                (args[ 3 ].ToUpper() == "FIFO" ? FileParsing.Ordering.Fifo : FileParsing.Ordering.Total));
+            routing = (args[ 4 ].ToUpper() == "FLOODING" ? FileParsing.RoutingPolicy.Flooding :
                 FileParsing.RoutingPolicy.Filter);
-            logging = (args[ 5 ] == "light" ? FileParsing.LoggingLevel.Light :
+            logging = (args[ 5 ].ToUpper() == "LIGHT" ? FileParsing.LoggingLevel.Light :
                 FileParsing.LoggingLevel.Full);
 
             TcpChannel channel = new TcpChannel(port);
