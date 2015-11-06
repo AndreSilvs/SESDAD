@@ -503,8 +503,6 @@ namespace SESDAD
         }
 
         static public void SendContentFiltering( Event evt ) {
-
-            try {
                 var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
                 foreach ( NamedSubscriber sub in subs ) {
                     sub.subcriber.ReceiveContent( evt );
@@ -512,12 +510,9 @@ namespace SESDAD
 
                 var bros = topicBrokers.FindAllBrokers( evt.Topic );
                 foreach ( NamedBroker bro in bros ) {
-                    bro.broker.SendContent( evt );
+                    //bro.broker.SendContent( evt );
+                    new Task( () => { bro.broker.SendContent( evt ); } ).Start();
                 }
-            }
-            catch ( Exception e ) {
-                Console.WriteLine( "Exception: " + e.Message );
-            }
         }
 
         static public void EraseRelatedEvents( string topic ) {
