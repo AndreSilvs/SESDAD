@@ -64,6 +64,7 @@ namespace SESDAD
     public class TopicSubscriberList {
 
         public List<TopicSubscribers> topicSubscribers = new List<TopicSubscribers>();
+        private object listLock = new object();
 
         public void AddTopicSubscriber( string topic, string name, ISubscriber sub ) {
             TopicSubscribers entry = FindTopic( topic );
@@ -119,6 +120,9 @@ namespace SESDAD
 
         public bool HasTopic( string topic ) {
             return topicSubscribers.Exists( n => n.topic == topic );
+        }
+        public int HowManySubscribed( string topic ) {
+            return (HasTopic( topic ) ? FindTopic( topic ).subscribers.Count : 0 );
         }
     }
 
@@ -180,6 +184,9 @@ namespace SESDAD
 
         public bool HasTopic( string topic ) {
             return topicBrokers.Exists( n => n.topic == topic );
+        }
+        public int HowManySubscribed( string topic ) {
+            return (HasTopic( topic ) ? FindTopic( topic ).brokers.Count : 0);
         }
     }
 
@@ -259,42 +266,45 @@ namespace SESDAD
 
         //Broker
         public void SendContent( Event evt ) {
-            if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
-                // FILTERING: TOPIC EVENT COUNTER
-                Broker.publisherTopics.AddEvent( evt.PublisherName, evt );
+            Console.WriteLine( "Send Content: " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum.ToString() );
+            lock ( Broker.subscriptionMutex ) {
+                if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
+                    // FILTERING: TOPIC EVENT COUNTER
+                    Broker.publisherTopics.AddEvent( evt.PublisherName, evt );
 
-                PublisherTopicRegister pRegister = Broker.publisherTopics.GetPublisherTopic( evt.PublisherName );
-                lock ( pRegister.mutex ) {
-                    foreach ( Event orderedEvent in pRegister.GetLastOrderedEvents( evt.Topic ) ) {
-                        Broker.SendContent( orderedEvent );
+                    PublisherTopicRegister pRegister = Broker.publisherTopics.GetPublisherTopic( evt.PublisherName );
+                    //lock ( pRegister.mutex ) {
 
-                        /*SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
-                        AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
-                        IAsyncResult remAr = del.BeginInvoke( orderedEvent, remoteCallback, null );*/
+                        foreach ( Event orderedEvent in pRegister.GetLastOrderedEvents( evt.Topic ) ) {
+                            Broker.SendContent( orderedEvent );
 
-                        if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
-                            new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
+                            /*SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
+                            AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
+                            IAsyncResult remAr = del.BeginInvoke( orderedEvent, remoteCallback, null );*/
+
+                            if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
+                                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
+                            }
                         }
-                    }
+                    //}
                 }
+                else {
+                    // FLOODING: EVENT COUNTER
+                    Broker.publisherEvents.AddEvent( evt );
 
-            }
-            else {
-                // FLOODING: EVENT COUNTER
-                Broker.publisherEvents.AddEvent( evt );
+                    EventListFlooding eList = Broker.publisherEvents.GetEventList( evt.PublisherName );
+                    //lock ( eList.mutex ) {
+                        foreach ( Event orderedEvent in eList.GetOrderedEventsUpToDate() ) {
+                            Broker.SendContent( orderedEvent );
 
-                EventListFlooding eList = Broker.publisherEvents.GetEventList( evt.PublisherName );
-                lock ( eList.mutex ) {
-                    foreach ( Event orderedEvent in eList.GetOrderedEventsUpToDate() ) {
-                        Broker.SendContent( orderedEvent );
-
-                        Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
-                        if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
-                            new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
+                            Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
+                            if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
+                                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
+                            }
                         }
-                    }
+                    //}
                 }
-            }
+            } // End of lock
             /*SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
             AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
             IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
@@ -336,25 +346,30 @@ namespace SESDAD
         public void Subscribe( string processname, string topic ) {
             ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
             if ( sub != null ) {
-                Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
-                Broker.topicSubscribers.AddTopicSubscriber( topic, processname, sub );
+                lock ( Broker.subscriptionMutex ) {
+                    Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
+                    Broker.topicSubscribers.AddTopicSubscriber( topic, processname, sub );
 
-                if ( Broker.parent != null ) {
-                    Broker.parent.SubscribeBroker( Broker.name, topic );
+                    if ( Broker.parent != null ) {
+                        Broker.parent.SubscribeBroker( Broker.name, topic );
+                    }
                 }
             }
         }
         public void Unsubscribe( string processname, string topic ) {
             ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
             if ( sub != null ) {
-                Console.WriteLine( processname + " just unsubscribed from " + topic );
-                Broker.topicSubscribers.RemoveTopicSubscriber( topic, processname );
+                lock ( Broker.subscriptionMutex ) {
+                    Console.WriteLine( processname + " just unsubscribed from " + topic );
+                    Broker.topicSubscribers.RemoveTopicSubscriber( topic, processname );
 
-                if ( Broker.parent != null ) {
-                    bool a = !Broker.topicSubscribers.HasTopic( topic );
-                    bool b = !Broker.topicBrokers.HasTopic( topic );
-                    if ( a && b ) {
-                        Broker.parent.UnsubscribeBroker( Broker.name, topic );
+                    if ( Broker.parent != null ) {
+                        bool a = !Broker.topicSubscribers.HasTopic( topic );
+                        bool b = !Broker.topicBrokers.HasTopic( topic );
+                        if ( a && b ) {
+                            Broker.EraseRelatedEvents( topic );
+                            Broker.parent.UnsubscribeBroker( Broker.name, topic );
+                        }
                     }
                 }
             }
@@ -362,25 +377,30 @@ namespace SESDAD
         public void SubscribeBroker( string processname, string topic ) {
             IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
             if ( bro != null ) {
-                Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
-                Broker.topicBrokers.AddTopicBroker( topic, processname, bro );
+                lock ( Broker.subscriptionMutex ) {
+                    Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
+                    Broker.topicBrokers.AddTopicBroker( topic, processname, bro );
 
-                if ( Broker.parent != null ) {
-                    Broker.parent.SubscribeBroker( Broker.name, topic );
+                    if ( Broker.parent != null ) {
+                        Broker.parent.SubscribeBroker( Broker.name, topic );
+                    }
                 }
             }
         }
         public void UnsubscribeBroker( string processname, string topic ) {
             IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
             if ( bro != null ) {
-                Console.WriteLine( "BRO " + processname + " just unsubscribed from " + topic );
-                Broker.topicBrokers.RemoveTopicBroker( topic, processname );
+                lock ( Broker.subscriptionMutex ) {
+                    Console.WriteLine( "BRO " + processname + " just unsubscribed from " + topic );
+                    Broker.topicBrokers.RemoveTopicBroker( topic, processname );
 
-                if ( Broker.parent != null ) {
-                    bool a = !Broker.topicSubscribers.HasTopic( topic );
-                    bool b = !Broker.topicBrokers.HasTopic( topic );
-                    if ( a && b ) {
-                        Broker.parent.UnsubscribeBroker( Broker.name, topic );
+                    if ( Broker.parent != null ) {
+                        bool a = !Broker.topicSubscribers.HasTopic( topic );
+                        bool b = !Broker.topicBrokers.HasTopic( topic );
+                        if ( a && b ) {
+                            Broker.EraseRelatedEvents( topic );
+                            Broker.parent.UnsubscribeBroker( Broker.name, topic );
+                        }
                     }
                 }
             }
@@ -416,6 +436,8 @@ namespace SESDAD
         static public FileParsing.Ordering ordering = FileParsing.Ordering.Fifo;
         static public FileParsing.RoutingPolicy routing = FileParsing.RoutingPolicy.Filter;
         static public FileParsing.LoggingLevel logging = FileParsing.LoggingLevel.Full;
+
+        static public object subscriptionMutex = new object();
 
         static public string name;
 
@@ -481,14 +503,31 @@ namespace SESDAD
         }
 
         static public void SendContentFiltering( Event evt ) {
-            var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
-            foreach ( NamedSubscriber sub in subs ) {
-                sub.subcriber.ReceiveContent( evt );
-            }
 
-            var bros = topicBrokers.FindAllBrokers( evt.Topic );
-            foreach ( NamedBroker bro in bros ) {
-                bro.broker.SendContent( evt );
+            try {
+                var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
+                foreach ( NamedSubscriber sub in subs ) {
+                    sub.subcriber.ReceiveContent( evt );
+                }
+
+                var bros = topicBrokers.FindAllBrokers( evt.Topic );
+                foreach ( NamedBroker bro in bros ) {
+                    bro.broker.SendContent( evt );
+                }
+            }
+            catch ( Exception e ) {
+                Console.WriteLine( "Exception: " + e.Message );
+            }
+        }
+
+        static public void EraseRelatedEvents( string topic ) {
+            if ( routing == FileParsing.RoutingPolicy.Filter ) {
+                if ( topic.EndsWith( "/*" ) ) {
+                    publisherTopics.EraseSubTopics( topic, topicSubscribers, topicBrokers );
+                }
+                else {
+                    publisherTopics.EraseTopic( topic );
+                }
             }
         }
 

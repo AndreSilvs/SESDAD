@@ -28,8 +28,7 @@ namespace SESDAD {
             lock ( mutex ) {
                 // Se nao tem registo do topic, criar
                 if ( !topics.ContainsKey( evt.Topic ) ) {
-                    topics.Add( evt.Topic, new OrderedTopicEvent() );
-                    topics[ evt.Topic ].lastEvent = evt.TopicEventNum - 1;
+                    topics.Add( evt.Topic, new OrderedTopicEvent( evt.TopicEventNum ) );
                 }
                 topics[ evt.Topic ].list.Add( evt );
 
@@ -39,6 +38,9 @@ namespace SESDAD {
         }
         public List<Event> GetListEvents( string topic ) {
             return topics[ topic ].list;
+        }
+        public List<string> GetListTopics() {
+            return new List<string>( topics.Keys );
         }
         public List<Event> GetLastOrderedEvents( string topic ) {
             List<Event> events = new List<Event>();
@@ -53,6 +55,9 @@ namespace SESDAD {
                 //}
             }
             return events;
+        }
+        public void EraseTopic( string topic ) {
+            topics.Remove( topic );
         }
     }
 
@@ -70,6 +75,28 @@ namespace SESDAD {
         }
         public PublisherTopicRegister GetPublisherTopic( string publisherName ) {
             return dictionary[ publisherName ];
+        }
+        public void EraseTopic( string topic ) {
+            foreach ( var entry in dictionary ) {
+                entry.Value.EraseTopic( topic );
+            }
+        }
+        public void EraseSubTopics( string topic, TopicSubscriberList subs, TopicBrokerList bros ) {
+            string matchTopic = topic.Substring( 0, topic.Count() - 1 );
+            HashSet<string> existingSubTopics = new HashSet<string>();
+            foreach ( var pubEntry in dictionary ) {
+                foreach ( string iTopic in pubEntry.Value.GetListTopics() ) {
+                    if ( iTopic.StartsWith( matchTopic ) ) {
+                        existingSubTopics.Add( iTopic );
+                    }
+                }
+            }
+
+            foreach ( string matchingTopic in existingSubTopics ) {
+                if ( subs.HowManySubscribed( matchingTopic ) + bros.HowManySubscribed( matchingTopic ) == 0 ) {
+                    EraseTopic( matchingTopic );
+                }
+            }
         }
     }
 }
