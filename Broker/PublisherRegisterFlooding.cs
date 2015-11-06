@@ -17,13 +17,13 @@ namespace SESDAD {
                 list.Add( evt );
 
                 // Ordenar lista por numero de evento de topico
-                list.Sort( ( t1, t2 ) => (t1.TopicEventNum - t2.TopicEventNum) );
+                list.Sort( ( t1, t2 ) => (t1.EventCounter - t2.EventCounter) );
             //}
         }
 
         public List<Event> GetOrderedEventsUpToDate() {
             List<Event> events = new List<Event>();
-            while ( (list.Count > 0) && list[ 0 ].TopicEventNum == lastEvent + 1 ) {
+            while ( (list.Count > 0) && list[ 0 ].EventCounter == lastEvent + 1 ) {
                 events.Add( list[ 0 ] );
                 list.RemoveAt( 0 );
                 lastEvent++;

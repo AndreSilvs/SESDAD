@@ -1,22 +1,15 @@
-Subscriber subscriber0 Subscribe /edu/ulisboa/meic/dad
+Subscriber subscriber0 Subscribe /edu/ulisboa/*
 Wait 2000
 Status
-Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500
-Wait 2000
 Subscriber subscriber1 Subscribe /edu/ulisboa/meic/iaj
 Subscriber subscriber2 Subscribe /edu/ulisboa/meic/dad
-Wait 2000
+Wait 4000
 Status
-Wait 2000
-Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500
-Status
-Wait 2000
-Subscriber subscriber2 Unsubscribe /edu/ulisboa/meic/dad
-Wait 2000
+Wait 4000
 Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500
 Wait 2000
-Subscriber subscriber2 Subscribe /edu/ulisboa/meic/dad
+Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/iaj Interval 500
 Wait 2000
-Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500
+Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/leic Interval 500
 Wait 2000
 Status

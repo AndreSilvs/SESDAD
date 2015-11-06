@@ -273,9 +273,11 @@ namespace SESDAD
                     Broker.publisherTopics.AddEvent( evt.PublisherName, evt );
 
                     PublisherTopicRegister pRegister = Broker.publisherTopics.GetPublisherTopic( evt.PublisherName );
-                    //lock ( pRegister.mutex ) {
 
+                    //lock ( pRegister.mutex ) {
+                    Console.WriteLine( "Foreach" );
                         foreach ( Event orderedEvent in pRegister.GetLastOrderedEvents( evt.Topic ) ) {
+                            Console.WriteLine( "Send" );
                             Broker.SendContent( orderedEvent );
 
                             /*SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
@@ -286,6 +288,7 @@ namespace SESDAD
                                 new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
                             }
                         }
+                        Console.WriteLine( "After foreach" );
                     //}
                 }
                 else {
@@ -486,6 +489,7 @@ namespace SESDAD
 
             if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
                 // Filtering
+                Console.WriteLine( "Into filtering." );
                 SendContentFiltering( evt );
 
             }
