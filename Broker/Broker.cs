@@ -266,7 +266,7 @@ namespace SESDAD
 
         //Broker
         public void SendContent( Event evt ) {
-            Console.WriteLine( "Send Content: " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum.ToString() );
+            //Console.WriteLine( "Send Content: " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum.ToString() );
             lock ( Broker.subscriptionMutex ) {
                 if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
                     // FILTERING: TOPIC EVENT COUNTER
@@ -275,9 +275,9 @@ namespace SESDAD
                     PublisherTopicRegister pRegister = Broker.publisherTopics.GetPublisherTopic( evt.PublisherName );
 
                     //lock ( pRegister.mutex ) {
-                    Console.WriteLine( "Foreach" );
+                    //Console.WriteLine( "Foreach" );
                         foreach ( Event orderedEvent in pRegister.GetLastOrderedEvents( evt.Topic ) ) {
-                            Console.WriteLine( "Send" );
+                            //Console.WriteLine( "Send" );
                             Broker.SendContent( orderedEvent );
 
                             /*SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
@@ -288,7 +288,7 @@ namespace SESDAD
                                 new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
                             }
                         }
-                        Console.WriteLine( "After foreach" );
+                       // Console.WriteLine( "After foreach" );
                     //}
                 }
                 else {
@@ -300,9 +300,9 @@ namespace SESDAD
                         foreach ( Event orderedEvent in eList.GetOrderedEventsUpToDate() ) {
                             Broker.SendContent( orderedEvent );
 
-                            Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
+                           // Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
                             if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
-                                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
+                                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + ", " + orderedEvent.PublisherName + ", " + orderedEvent.Topic + ", " + orderedEvent.TopicEventNum ); } ).Start();
                             }
                         }
                     //}
@@ -350,7 +350,7 @@ namespace SESDAD
             ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
             if ( sub != null ) {
                 lock ( Broker.subscriptionMutex ) {
-                    Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
+                   // Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
                     Broker.topicSubscribers.AddTopicSubscriber( topic, processname, sub );
 
                     if ( Broker.parent != null ) {
@@ -363,7 +363,7 @@ namespace SESDAD
             ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
             if ( sub != null ) {
                 lock ( Broker.subscriptionMutex ) {
-                    Console.WriteLine( processname + " just unsubscribed from " + topic );
+                   // Console.WriteLine( processname + " just unsubscribed from " + topic );
                     Broker.topicSubscribers.RemoveTopicSubscriber( topic, processname );
 
                     if ( Broker.parent != null ) {
@@ -381,7 +381,7 @@ namespace SESDAD
             IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
             if ( bro != null ) {
                 lock ( Broker.subscriptionMutex ) {
-                    Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
+                    //Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
                     Broker.topicBrokers.AddTopicBroker( topic, processname, bro );
 
                     if ( Broker.parent != null ) {
@@ -394,7 +394,7 @@ namespace SESDAD
             IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
             if ( bro != null ) {
                 lock ( Broker.subscriptionMutex ) {
-                    Console.WriteLine( "BRO " + processname + " just unsubscribed from " + topic );
+                  //  Console.WriteLine( "BRO " + processname + " just unsubscribed from " + topic );
                     Broker.topicBrokers.RemoveTopicBroker( topic, processname );
 
                     if ( Broker.parent != null ) {
@@ -489,7 +489,7 @@ namespace SESDAD
 
             if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
                 // Filtering
-                Console.WriteLine( "Into filtering." );
+               // Console.WriteLine( "Into filtering." );
                 SendContentFiltering( evt );
 
             }

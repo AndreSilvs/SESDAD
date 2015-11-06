@@ -1,15 +1,24 @@
-Subscriber subscriber0 Subscribe /edu/ulisboa/*
+Subscriber subscriber0 Subscribe /animal/*
 Wait 2000
 Status
-Subscriber subscriber1 Subscribe /edu/ulisboa/meic/iaj
-Subscriber subscriber2 Subscribe /edu/ulisboa/meic/dad
+Subscriber subscriber1 Subscribe /animal/chordata/vertebrado/ave
+Subscriber subscriber2 Subscribe /animal/chordata/vertebrado/peixe
 Wait 4000
 Status
 Wait 4000
-Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/dad Interval 500
+Publisher publisher0 Publish 3 Ontopic /animal/chordata/vertebrado/ave Interval 500
 Wait 2000
-Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/meic/iaj Interval 500
+Publisher publisher0 Publish 3 Ontopic /animal/chordata/vertebrado/peixe Interval 500
 Wait 2000
-Publisher publisher0 Publish 3 Ontopic /edu/ulisboa/leic Interval 500
+Publisher publisher0 Publish 3 Ontopic /animal/mollusca Interval 500
+Wait 4000
+Subscriber subscriber0 Unsubscribe /animal/*
+Status
+Wait 4000
+Publisher publisher1 Publish 3 Ontopic /animal/chordata/vertebrado/peixe Interval 500
+Publisher publisher0 Publish 3 Ontopic /animal/chordata/vertebrado/ave Interval 500
 Wait 2000
+Publisher publisher0 Publish 3 Ontopic /animal/chordata/vertebrado/peixe Interval 500
+Wait 2000
+Publisher publisher0 Publish 3 Ontopic /animal/mollusca Interval 500
 Status

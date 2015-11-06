@@ -93,12 +93,12 @@ namespace SESDAD
                 PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContentUp );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 EventCounter eCounter = getCountAndIncrement( topic );
-                IAsyncResult remAr = del.BeginInvoke( new Event( topic, "banana", Publisher.name, eCounter.topicCounter, eCounter.globalCounter  ), remoteCallback, null );
+                IAsyncResult remAr = del.BeginInvoke( new Event( topic, Publisher.name + "_" + eCounter.topicCounter, Publisher.name, eCounter.topicCounter, eCounter.globalCounter  ), remoteCallback, null );
 
                 //Publisher.puppetMaster.Log( "PubEvent" );
                 PublishPuppetLog logDel = new PublishPuppetLog( Publisher.puppetMaster.Log );
                 AsyncCallback remoteCallbackLog = new AsyncCallback( PublishLogCallBack );
-                IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent " + Publisher.name + ", " + topic + ", " + i.ToString(), remoteCallbackLog, null );
+                IAsyncResult remArLog = logDel.BeginInvoke( "PubEvent " + Publisher.name + ", " + topic + ", " + eCounter.topicCounter, remoteCallbackLog, null );
 
                 Thread.Sleep( interval_ms );
             }

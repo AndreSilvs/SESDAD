@@ -45,9 +45,11 @@ namespace SESDAD
 
         public void ReceiveContent(Event evt)
         {
-            new Task( () => { Subscriber.puppetMaster.Log( "SubEvent " + Subscriber.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
-            System.Console.WriteLine("Topic: " + evt.Topic + " Content: " + evt.Content + " " + evt.EventCounter );
-           // Subscriber.puppetMaster.Log("SubEvent " + Subscriber.name + " thing.");
+            if (Subscriber.topics.Contains(evt.Topic)){
+                new Task(() => { Subscriber.puppetMaster.Log("SubEvent " + Subscriber.name + ", " + evt.PublisherName + ", " + evt.Topic + ", " + evt.TopicEventNum); }).Start();
+                System.Console.WriteLine("Topic: " + evt.Topic + " Content: " + evt.Content + " " + evt.EventCounter);
+                // Subscriber.puppetMaster.Log("SubEvent " + Subscriber.name + " thing.");
+            }
         }
 
 
@@ -79,10 +81,11 @@ namespace SESDAD
 
     class Subscriber
     {
-
         static public IBroker broker;
         static public IPuppetMaster puppetMaster;
         static public string name;
+
+        static public List<string> topics = new List<string>();
 
         public static void SubscriberCallback( IAsyncResult ar ) {
             SubscriberDelegate del = (SubscriberDelegate)((AsyncResult)ar).AsyncDelegate;
@@ -91,21 +94,25 @@ namespace SESDAD
         }
 
         public static void Subscribe( string topic ) {
-            Console.WriteLine( "Subscribing to: " + topic );
+           // Console.WriteLine( "Subscribing to: " + topic );
 
             //broker.Subscribe( name, topic );
             SubscriberDelegate del = new SubscriberDelegate( broker.Subscribe );
             AsyncCallback remoteCallback = new AsyncCallback( SubscriberCallback );
             IAsyncResult remAr = del.BeginInvoke( name, topic, remoteCallback, null );
+
+            Subscriber.topics.Add(topic);
         }
 
         public static void Unsubscribe( string topic ) {
-            Console.WriteLine( "Unsubscribing from: " + topic );
+          //  Console.WriteLine( "Unsubscribing from: " + topic );
 
             //broker.Unsubscribe( name, topic );
             SubscriberDelegate del = new SubscriberDelegate( broker.Unsubscribe );
             AsyncCallback remoteCallback = new AsyncCallback( SubscriberCallback );
             IAsyncResult remAr = del.BeginInvoke( name, topic, remoteCallback, null );
+
+            Subscriber.topics.Remove(topic);
         }
 
         static void Main(string[] args)
