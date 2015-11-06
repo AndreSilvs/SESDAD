@@ -1,5 +1,5 @@
 LoggingLevel full
-RoutingPolicy filter
+RoutingPolicy filtering
 Ordering FIFO
 
 Site site0 Parent none

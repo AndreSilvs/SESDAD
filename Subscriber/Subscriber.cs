@@ -45,7 +45,7 @@ namespace SESDAD
 
         public void ReceiveContent(Event evt)
         {
-            if (Subscriber.topics.Contains(evt.Topic)){
+            if (Subscriber.topics.Contains(evt.Topic) || Subscriber.IsSubTopic( evt.Topic )){
                 new Task(() => { Subscriber.puppetMaster.Log("SubEvent " + Subscriber.name + ", " + evt.PublisherName + ", " + evt.Topic + ", " + evt.TopicEventNum); }).Start();
                 System.Console.WriteLine("Topic: " + evt.Topic + " Content: " + evt.Content + " " + evt.EventCounter);
                 // Subscriber.puppetMaster.Log("SubEvent " + Subscriber.name + " thing.");
@@ -91,6 +91,18 @@ namespace SESDAD
             SubscriberDelegate del = (SubscriberDelegate)((AsyncResult)ar).AsyncDelegate;
             del.EndInvoke( ar );
             return;
+        }
+
+        public static bool IsSubTopic( string subTopic ) {
+            foreach ( string topic in topics ) {
+                if ( topic.EndsWith( "/*" ) ) {
+                    string matchTopic = topic.Substring( 0, topic.Count() - 1 );
+                    if ( subTopic.StartsWith( matchTopic ) ) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public static void Subscribe( string topic ) {
