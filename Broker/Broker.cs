@@ -183,6 +183,8 @@ namespace SESDAD
         }
     }
 
+
+
     class RemoteBroker : MarshalByRefObject, IBroker, IPuppetBroker, IPuppetProcess {
 
         public delegate void SendContentDelegate( Event ev );
@@ -257,16 +259,49 @@ namespace SESDAD
 
         //Broker
         public void SendContent( Event evt ) {
-            //Devo fazer 1 chamada asyncrona para cada subscriber ou 1 para todos????????
-            //??????????????????????
-            //????????????????
-            SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
+            if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
+                // FILTERING: TOPIC EVENT COUNTER
+                Broker.publisherTopics.AddEvent( evt.PublisherName, evt );
+
+                PublisherTopicRegister pRegister = Broker.publisherTopics.GetPublisherTopic( evt.PublisherName );
+                lock ( pRegister.mutex ) {
+                    foreach ( Event orderedEvent in pRegister.GetLastOrderedEvents( evt.Topic ) ) {
+                        Broker.SendContent( orderedEvent );
+
+                        /*SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
+                        AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
+                        IAsyncResult remAr = del.BeginInvoke( orderedEvent, remoteCallback, null );*/
+
+                        if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
+                            new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
+                        }
+                    }
+                }
+
+            }
+            else {
+                // FLOODING: EVENT COUNTER
+                Broker.publisherEvents.AddEvent( evt );
+
+                EventListFlooding eList = Broker.publisherEvents.GetEventList( evt.PublisherName );
+                lock ( eList.mutex ) {
+                    foreach ( Event orderedEvent in eList.GetOrderedEventsUpToDate() ) {
+                        Broker.SendContent( orderedEvent );
+
+                        Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
+                        if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
+                            new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
+                        }
+                    }
+                }
+            }
+            /*SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
             AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
             IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
 
             if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
                 new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
-            }
+            }*/
 
             /*foreach (ISubscriber coiso in Broker.subscribers)
             {
@@ -288,7 +323,7 @@ namespace SESDAD
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
             }
             else {
-                SendContentDelegate del = new SendContentDelegate( Broker.SendContent );
+                SendContentDelegate del = new SendContentDelegate( this.SendContent );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
             }
@@ -375,6 +410,9 @@ namespace SESDAD
         static public TopicSubscriberList topicSubscribers = new TopicSubscriberList();
         static public TopicBrokerList topicBrokers = new TopicBrokerList();
 
+        static public PublisherTopicDictionary publisherTopics = new PublisherTopicDictionary();
+        static public EventQueueFlooding publisherEvents = new EventQueueFlooding();
+
         static public FileParsing.Ordering ordering = FileParsing.Ordering.Fifo;
         static public FileParsing.RoutingPolicy routing = FileParsing.RoutingPolicy.Filter;
         static public FileParsing.LoggingLevel logging = FileParsing.LoggingLevel.Full;
@@ -420,7 +458,6 @@ namespace SESDAD
 
         static public void SendContent(Event evt)
         {
-
             //System.Console.WriteLine(evt.EventCounter);
 
             //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
@@ -437,7 +474,8 @@ namespace SESDAD
                 }
 
                 foreach ( NamedBroker coiso in Broker.children ) {
-                    coiso.broker.SendContent( evt );
+                    new Task( () => { coiso.broker.SendContent( evt ); } ).Start();
+                    //coiso.broker.SendContent( evt );
                 }
             }
         }

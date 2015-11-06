@@ -46,7 +46,7 @@ namespace SESDAD
         public void ReceiveContent(Event evt)
         {
             new Task( () => { Subscriber.puppetMaster.Log( "SubEvent " + Subscriber.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
-            System.Console.WriteLine("Topic: " + evt.Topic + " Content: " + evt.Content);
+            System.Console.WriteLine("Topic: " + evt.Topic + " Content: " + evt.Content + " " + evt.EventCounter );
            // Subscriber.puppetMaster.Log("SubEvent " + Subscriber.name + " thing.");
         }
 

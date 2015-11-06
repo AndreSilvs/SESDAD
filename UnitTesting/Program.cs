@@ -10,8 +10,8 @@ namespace SESDAD {
         class ConfigFileTest {
             static void Main( string[] args ) {
                 //TestConfigurationFile();
-
-                TestScriptFile();
+                //TestScriptFile();
+                TestEventTopicOrdering();
             }
 
             static void TestConfigurationFile() {
@@ -77,6 +77,46 @@ namespace SESDAD {
                 }
 
                 Console.WriteLine( "End of Script file test." );
+                Console.ReadLine();
+            }
+
+            static void TestEventTopicOrdering() {
+                Console.WriteLine( "Testing event ordering" );
+
+                PublisherTopicRegister register = new PublisherTopicRegister();
+
+                Console.WriteLine( "Add events 0 - 4" );
+                for ( int i = 0; i < 5; ++i ) {
+                    Event newEvent = new Event( "Testtopic", "content", "publisher0", i, i );
+                    register.AddEvent( newEvent );
+                }
+
+                Console.WriteLine( "Add event 6" );
+                Event event6 = new Event( "Testtopic", "content", "publisher0", 5, 5 );
+                Event event7 = new Event( "Testtopic", "content", "publisher0", 6, 6 );
+                register.AddEvent( event7 );
+
+                Console.WriteLine();
+                Console.WriteLine( "Print all received events:" );
+                foreach ( Event ev in register.GetListEvents( "Testtopic" ) ) {
+                    Console.WriteLine( ev.Topic + " " + ev.Content + " " + ev.TopicEventNum );
+                }
+
+                Console.WriteLine();
+                Console.WriteLine( "1 - Print ordered events: " );
+                foreach ( Event ev in register.GetLastOrderedEvents( "Testtopic" ) ) {
+                    Console.WriteLine( ev.Topic + " " + ev.Content + " " + ev.TopicEventNum );
+                }
+
+                Console.WriteLine( "Add event 5" );
+                register.AddEvent( event6 );
+
+                Console.WriteLine();
+                Console.WriteLine( "2 - Print ordered events: " );
+                foreach ( Event ev in register.GetLastOrderedEvents( "Testtopic" ) ) {
+                    Console.WriteLine( ev.Topic + " " + ev.Content + " " + ev.TopicEventNum );
+                }
+
                 Console.ReadLine();
             }
         }

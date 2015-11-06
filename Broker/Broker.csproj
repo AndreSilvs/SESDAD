@@ -46,6 +46,8 @@
   <ItemGroup>
     <Compile Include="Broker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PublisherRegister.cs" />
+    <Compile Include="PublisherRegisterFlooding.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
