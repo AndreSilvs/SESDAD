@@ -25,7 +25,7 @@ namespace SESDAD
 
         public void Crash()
         {
-            throw new NotImplementedException();
+            Environment.Exit(0);
         }
 
         public void ForceSubscribe(string topicname)
