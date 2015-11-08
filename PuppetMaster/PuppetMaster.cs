@@ -369,6 +369,12 @@ namespace SESDAD {
                         }
                     }
                     else if ( command.type == FileParsing.CommandType.Crash ) {
+                        IPuppetProcess proc;
+                        processes.TryGetValue( command.properties[0], out proc );
+                        if (proc != null)
+                            proc.Crash();
+                        else
+                            Console.WriteLine("Invalid process name: \"" + command.properties[0] + "\" Cannot process crash command.");
                     }
                     else if ( command.type == FileParsing.CommandType.Freeze ) {
                     }
