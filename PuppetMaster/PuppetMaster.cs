@@ -16,6 +16,8 @@ namespace SESDAD {
 
     public delegate void PuppetSubscribeDelegate( string topic );
 
+    public delegate void PuppetCrashDelegate();
+
     public class RemotePuppetMaster : MarshalByRefObject, IPuppetMaster
     {
         public void Log(string message)
@@ -371,8 +373,12 @@ namespace SESDAD {
                     else if ( command.type == FileParsing.CommandType.Crash ) {
                         IPuppetProcess proc;
                         processes.TryGetValue( command.properties[0], out proc );
-                        if (proc != null)
-                            proc.Crash();
+                        if (proc != null) {
+                            //proc.Crash();
+                            PuppetCrashDelegate del = new PuppetCrashDelegate( proc.Crash );
+                            AsyncCallback remoteCallback = new AsyncCallback( PuppetPublishCallback );
+                            IAsyncResult remAr = del.BeginInvoke( remoteCallback, null );
+                        }
                         else
                             Console.WriteLine("Invalid process name: \"" + command.properties[0] + "\" Cannot process crash command.");
                     }
