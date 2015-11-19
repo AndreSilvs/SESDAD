@@ -30,6 +30,10 @@ namespace SESDAD {
                 if ( !topics.ContainsKey( evt.Topic ) ) {
                     topics.Add( evt.Topic, new OrderedTopicEvent( evt.TopicEventNum ) );
                 }
+                if ( evt.TopicEventNum < topics[ evt.Topic ].lastEvent ) {
+                    // Discard
+                    return;
+                }
                 topics[ evt.Topic ].list.Add( evt );
 
                 // Ordenar lista por numero de evento de topico
