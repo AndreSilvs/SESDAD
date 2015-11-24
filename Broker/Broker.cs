@@ -257,11 +257,14 @@ namespace SESDAD
         }
 
         public void Freeze() {
-            throw new NotImplementedException();
+            Broker.frozen = true;
         }
 
         public void Unfreeze() {
-            throw new NotImplementedException();
+            lock (Broker.monitorLock) {
+                Broker.frozen = false;
+                Monitor.PulseAll(Broker.monitorLock);
+            }
         }
 
         //Broker
@@ -330,10 +333,21 @@ namespace SESDAD
         public void SendContentUp( Event evt ) {
 
             if ( Broker.parent != null ) {
-               // System.Console.WriteLine(evt.EventCounter);
-                SendContentDelegate del = new SendContentDelegate( Broker.parent.SendContentUp );
-                AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
-                IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
+                // System.Console.WriteLine(evt.EventCounter);
+
+                lock (Broker.monitorLock)
+                {
+                    while (Broker.frozen)
+                    {
+                        Monitor.Wait(Broker.monitorLock);
+                    }
+                }
+
+                System.Console.WriteLine("Shit");
+
+                SendContentDelegate del = new SendContentDelegate(Broker.parent.SendContentUp);
+                AsyncCallback remoteCallback = new AsyncCallback(PublishAsyncCallBack);
+                IAsyncResult remAr = del.BeginInvoke(evt, remoteCallback, null);
             }
             else {
                 SendContentDelegate del = new SendContentDelegate( this.SendContent );
@@ -442,7 +456,12 @@ namespace SESDAD
 
         static public object subscriptionMutex = new object();
 
+        static public object monitorLock = new object();
+
         static public string name;
+
+        static public bool frozen = false;
+
 
         static void Main(string[] args)
         {

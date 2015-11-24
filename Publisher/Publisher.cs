@@ -46,11 +46,11 @@ namespace SESDAD
         }
 
         public void Freeze() {
-            throw new NotImplementedException();
+            Publisher.frozen = true;
         }
 
         public void Unfreeze() {
-            throw new NotImplementedException();
+            Publisher.frozen = false;
         }
 
         public void RegisterPuppetMaster(string address)
@@ -74,6 +74,8 @@ namespace SESDAD
         static public IPuppetMaster puppetMaster;
 
         static Dictionary<string, int> topicCount = new Dictionary<string, int>();
+
+        static public bool frozen = false;
 
         public static void PublishAsyncCallBack( IAsyncResult ar ) {
             PublishTopicDelegate del = (PublishTopicDelegate)((AsyncResult)ar).AsyncDelegate;

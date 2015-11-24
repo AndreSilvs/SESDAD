@@ -38,10 +38,6 @@ namespace SESDAD
             Subscriber.Unsubscribe( topicname );
         }
 
-        public void Freeze()
-        {
-            throw new NotImplementedException();
-        }
 
         public void ReceiveContent(Event evt)
         {
@@ -61,9 +57,14 @@ namespace SESDAD
             //Se os subscribers souberem as suas subscrições por aqui tambem
         }
 
+        public void Freeze()
+        {
+            Subscriber.frozen = true;
+        }
+
         public void Unfreeze()
         {
-            throw new NotImplementedException();
+            Subscriber.frozen = false;
         }
 
         public void RegisterPuppetMaster(string address)
@@ -84,6 +85,8 @@ namespace SESDAD
         static public IBroker broker;
         static public IPuppetMaster puppetMaster;
         static public string name;
+
+        static public bool frozen = false;
 
         static public List<string> topics = new List<string>();
 

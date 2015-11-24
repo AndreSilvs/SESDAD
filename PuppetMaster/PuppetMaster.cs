@@ -383,8 +383,26 @@ namespace SESDAD {
                             Console.WriteLine("Invalid process name: \"" + command.properties[0] + "\" Cannot process crash command.");
                     }
                     else if ( command.type == FileParsing.CommandType.Freeze ) {
+                        IPuppetProcess proc;
+                        processes.TryGetValue(command.properties[0], out proc);
+                        if (proc != null)
+                        {
+                            proc.Freeze();
+                        }
+                        else
+                            Console.WriteLine("Invalid process name: \"" + command.properties[0] + "\" Cannot process freeze command.");
+
                     }
                     else if ( command.type == FileParsing.CommandType.Unfreeze ) {
+
+                        IPuppetProcess proc;
+                        processes.TryGetValue(command.properties[0], out proc);
+                        if (proc != null)
+                        {
+                            proc.Unfreeze();
+                        }
+                        else
+                            Console.WriteLine("Invalid process name: \"" + command.properties[0] + "\" Cannot process unfreeze command.");
                     }
                     else if ( command.type == FileParsing.CommandType.Wait ) {
                         int time = Int32.Parse( command.properties[ 0 ] );
