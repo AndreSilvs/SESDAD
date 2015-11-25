@@ -505,6 +505,13 @@ namespace SESDAD
             //System.Console.WriteLine(evt.EventCounter);
 
             //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
+            lock (Broker.monitorLock)
+            {
+                while (Broker.frozen)
+                {
+                    Monitor.Wait(Broker.monitorLock);
+                }
+            }
 
             if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
                 // Filtering

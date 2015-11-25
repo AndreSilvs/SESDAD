@@ -7,6 +7,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Messaging;
+using System.Threading;
 
 namespace SESDAD
 {
@@ -41,6 +42,14 @@ namespace SESDAD
 
         public void ReceiveContent(Event evt)
         {
+            lock (Subscriber.monitorLock)
+            {
+                while (Subscriber.frozen)
+                {
+                    Monitor.Wait(Subscriber.monitorLock);
+                }
+            }
+
             if (Subscriber.topics.Contains(evt.Topic) || Subscriber.IsSubTopic( evt.Topic )){
                 new Task(() => { Subscriber.puppetMaster.Log("SubEvent " + Subscriber.name + ", " + evt.PublisherName + ", " + evt.Topic + ", " + evt.TopicEventNum); }).Start();
                 System.Console.WriteLine("Topic: " + evt.Topic + " Content: " + evt.Content + " " + evt.EventCounter);
@@ -52,7 +61,15 @@ namespace SESDAD
         public void Status()
         {
             Console.WriteLine("I'm " + Subscriber.name);
-            Console.WriteLine("I'm alive");
+            if (Subscriber.frozen)
+            {
+                Console.WriteLine("Brrrr I'm freezing");
+
+            }
+            else
+            {
+                Console.WriteLine("I'm alive");
+            }
 
             //Se os subscribers souberem as suas subscrições por aqui tambem
         }
@@ -64,7 +81,11 @@ namespace SESDAD
 
         public void Unfreeze()
         {
-            Subscriber.frozen = false;
+            lock (Subscriber.monitorLock)
+            {
+                Subscriber.frozen = false;
+                Monitor.PulseAll(Subscriber.monitorLock);
+            }
         }
 
         public void RegisterPuppetMaster(string address)
@@ -87,6 +108,8 @@ namespace SESDAD
         static public string name;
 
         static public bool frozen = false;
+
+        static public object monitorLock = new object();
 
         static public List<string> topics = new List<string>();
 

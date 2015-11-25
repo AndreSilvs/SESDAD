@@ -50,7 +50,11 @@ namespace SESDAD
         }
 
         public void Unfreeze() {
-            Publisher.frozen = false;
+            lock (Publisher.monitorLock)
+            {
+                Publisher.frozen = false;
+                Monitor.PulseAll(Publisher.monitorLock);
+            }
         }
 
         public void RegisterPuppetMaster(string address)
@@ -76,6 +80,8 @@ namespace SESDAD
         static Dictionary<string, int> topicCount = new Dictionary<string, int>();
 
         static public bool frozen = false;
+
+        static public object monitorLock = new object();
 
         public static void PublishAsyncCallBack( IAsyncResult ar ) {
             PublishTopicDelegate del = (PublishTopicDelegate)((AsyncResult)ar).AsyncDelegate;
