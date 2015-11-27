@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -167,7 +168,12 @@ namespace SESDAD
             string serviceName = args[ 1 ];
             Subscriber.name = args[2];
 
-            TcpChannel channel = new TcpChannel(port);
+            BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
+            IDictionary props = new Hashtable();
+            props[ "port" ] = port;
+            props[ "timeout" ] = 3000; // 3 secs
+            TcpChannel channel = new TcpChannel( props, null, provider );
+            //TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, true);
 
             RemotingConfiguration.RegisterWellKnownServiceType(

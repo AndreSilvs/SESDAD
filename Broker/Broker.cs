@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -483,7 +484,13 @@ namespace SESDAD
             logging = (args[ 5 ].ToUpper() == "LIGHT" ? FileParsing.LoggingLevel.Light :
                 FileParsing.LoggingLevel.Full);
 
-            TcpChannel channel = new TcpChannel(port);
+            BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
+            IDictionary props = new Hashtable();
+            props[ "port" ] = port;
+            props[ "timeout" ] = 3000; // 3 secs
+            TcpChannel channel = new TcpChannel( props, null, provider );
+
+            //TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, true);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
@@ -533,16 +540,21 @@ namespace SESDAD
         }
 
         static public void SendContentFiltering( Event evt ) {
-                var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
-                foreach ( NamedSubscriber sub in subs ) {
+            var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
+            foreach ( NamedSubscriber sub in subs ) {
+                try {
                     sub.subcriber.ReceiveContent( evt );
                 }
-
-                var bros = topicBrokers.FindAllBrokers( evt.Topic );
-                foreach ( NamedBroker bro in bros ) {
-                    //bro.broker.SendContent( evt );
-                    new Task( () => { bro.broker.SendContent( evt ); } ).Start();
+                catch ( Exception e ) {
+                    Console.WriteLine( e.Message );
                 }
+            }
+
+            var bros = topicBrokers.FindAllBrokers( evt.Topic );
+            foreach ( NamedBroker bro in bros ) {
+                //bro.broker.SendContent( evt );
+                new Task( () => { bro.broker.SendContent( evt ); } ).Start();
+            }
         }
 
         static public void EraseRelatedEvents( string topic ) {
