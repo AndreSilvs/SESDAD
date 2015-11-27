@@ -378,6 +378,11 @@ namespace SESDAD {
                             PuppetCrashDelegate del = new PuppetCrashDelegate( proc.Crash );
                             AsyncCallback remoteCallback = new AsyncCallback( PuppetPublishCallback );
                             IAsyncResult remAr = del.BeginInvoke( remoteCallback, null );
+                            //remove process after crashing it
+                            processes.Remove(command.properties[0]);
+                            subscribers.Remove(command.properties[0]);
+                            publishers.Remove(command.properties[0]);
+                            brokers.Remove(command.properties[0]);
                         }
                         else
                             Console.WriteLine("Invalid process name: \"" + command.properties[0] + "\" Cannot process crash command.");
