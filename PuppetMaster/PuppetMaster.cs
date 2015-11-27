@@ -145,7 +145,7 @@ namespace SESDAD {
                                               typeof(IPuppetBroker),
                                               processData.url);
 
-                    PuppetMaster.brokers.Add(processData.name, obj);
+                    PuppetMaster.brokers.Add( processData.name, obj );
 
                 }
                 else if ( processData.type == FileParsing.ProcessType.Publisher ) {
@@ -203,6 +203,40 @@ namespace SESDAD {
                 PuppetMaster.processes.Add(processData.name, obj2);
 
             }
+
+            // Criar Brokers de backup
+            // Falta resolver o problema dos ports desconhecidos
+            /*foreach ( FileParsing.Process processData in config.processes ) {
+                if ( processData.type == FileParsing.ProcessType.Broker ) {
+
+                    //Puppetmaster com o ip do processo
+                    IPuppetMaster pup = (IPuppetMaster)Activator.GetObject(
+                                                typeof( IPuppetMaster ),
+                                                "tcp://" + processData.ip + ":30000/puppet" );
+
+                    // Passing zero so that the broker selects an optional port??
+
+                    // Criar o segundo e terceiro brokers a partir da informacao do primeiro broker
+                    string arguments = "0" + " " + processData.serviceName + " " + processData.name + "_1" + " " + config.GetOrdering() + " " + config.GetRoutingPolicy() + " " + config.GetLoggingLevel();
+                    pup.CreateBroker( arguments );
+                    arguments = "0" + " " + processData.serviceName + " " + processData.name + "_2" + " " + config.GetOrdering() + " " + config.GetRoutingPolicy() + " " + config.GetLoggingLevel();
+                    pup.CreateBroker( arguments );
+
+                    IPuppetBroker obj_1 = (IPuppetBroker)Activator.GetObject(
+                          typeof( IPuppetBroker ),
+                          processData.url + "_1" );
+
+                    IPuppetBroker obj_2 = (IPuppetBroker)Activator.GetObject(
+                                              typeof( IPuppetBroker ),
+                                              processData.url + "_2" );
+
+                    PuppetMaster.brokers.Add( processData.name + "_1", obj_1 );
+                    PuppetMaster.brokers.Add( processData.name + "_2", obj_2 );
+
+                    PuppetMaster.processes.Add( processData.name + "_1", (IPuppetProcess)obj_1 );
+                    PuppetMaster.processes.Add( processData.name + "_2", (IPuppetProcess)obj_2 );
+                }
+            }*/
 
             foreach (FileParsing.Process processData in config.processes)
             {
