@@ -362,20 +362,69 @@ namespace SESDAD
         }
 
         public void Subscribe( string processname, string topic ) {
-            ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
-            if ( sub != null ) {
-                lock ( Broker.subscriptionMutex ) {
-                   // Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
-                    Broker.topicSubscribers.AddTopicSubscriber( topic, processname, sub );
 
-                    if ( Broker.parent != null ) {
-                        Broker.parent.SubscribeBroker( Broker.name, topic );
+           // if (Broker.frozen){
+
+                new Task(() =>
+                {
+                    lock (Broker.monitorLock)
+                    {
+                        while (Broker.frozen)
+                        {
+                            Monitor.Wait(Broker.monitorLock);
+                        }
+                    }
+
+                    ISubscriber sub = Broker.subscribers.Find(n => n.name == processname).subcriber;
+                    if (sub != null)
+                    {
+                        lock (Broker.subscriptionMutex)
+                        {
+                            // Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
+                            Broker.topicSubscribers.AddTopicSubscriber(topic, processname, sub);
+
+                            if (Broker.parent != null)
+                            {
+                                Broker.parent.SubscribeBroker(Broker.name, topic);
+                            }
+                        }
+                    }
+
+
+                }).Start();
+          //  }
+
+            /*else
+            {
+                ISubscriber sub = Broker.subscribers.Find(n => n.name == processname).subcriber;
+                if (sub != null)
+                {
+                    lock (Broker.subscriptionMutex)
+                    {
+                        // Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
+                        Broker.topicSubscribers.AddTopicSubscriber(topic, processname, sub);
+
+                        if (Broker.parent != null)
+                        {
+                            Broker.parent.SubscribeBroker(Broker.name, topic);
+                        }
                     }
                 }
-            }
+            }*/
         }
         public void Unsubscribe( string processname, string topic ) {
-            ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
+
+            new Task(() =>
+            {
+                lock (Broker.monitorLock)
+                {
+                    while (Broker.frozen)
+                    {
+                        Monitor.Wait(Broker.monitorLock);
+                    }
+                }
+
+                ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
             if ( sub != null ) {
                 lock ( Broker.subscriptionMutex ) {
                    // Console.WriteLine( processname + " just unsubscribed from " + topic );
@@ -391,9 +440,21 @@ namespace SESDAD
                     }
                 }
             }
+            }).Start();
         }
         public void SubscribeBroker( string processname, string topic ) {
-            IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
+
+            new Task(() =>
+            {
+                lock (Broker.monitorLock)
+                {
+                    while (Broker.frozen)
+                    {
+                        Monitor.Wait(Broker.monitorLock);
+                    }
+                }
+
+                IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
             if ( bro != null ) {
                 lock ( Broker.subscriptionMutex ) {
                     //Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
@@ -404,9 +465,21 @@ namespace SESDAD
                     }
                 }
             }
+            }).Start();
         }
         public void UnsubscribeBroker( string processname, string topic ) {
-            IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
+
+            new Task(() =>
+            {
+                lock (Broker.monitorLock)
+                {
+                    while (Broker.frozen)
+                    {
+                        Monitor.Wait(Broker.monitorLock);
+                    }
+                }
+
+                IBroker bro = Broker.children.Find( n => n.name == processname ).broker;
             if ( bro != null ) {
                 lock ( Broker.subscriptionMutex ) {
                   //  Console.WriteLine( "BRO " + processname + " just unsubscribed from " + topic );
@@ -422,6 +495,7 @@ namespace SESDAD
                     }
                 }
             }
+            }).Start();
         }
 
         public void RegisterPuppetMaster(string address)
