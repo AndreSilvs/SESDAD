@@ -620,7 +620,7 @@ namespace SESDAD
                     sub.subcriber.ReceiveContent( evt );
                 }
                 catch ( Exception e ) {
-                    Console.WriteLine( e.Message );
+                    Console.WriteLine( "Exception to susbcriber: " + e.Message );
                 }
             }
 

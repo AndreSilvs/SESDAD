@@ -92,6 +92,7 @@ namespace SESDAD {
         static Dictionary<String, IPuppetPublisher> publishers = new Dictionary<String, IPuppetPublisher>();
         static Dictionary<String, IPuppetBroker> brokers = new Dictionary<String, IPuppetBroker>();
         static Dictionary<String, IPuppetProcess> processes = new Dictionary<String, IPuppetProcess>();
+        static Dictionary<String, BrokerNode> brokerNodes = new Dictionary<string, BrokerNode>();
 
         static void Main( string[] args ) {
             System.IO.File.WriteAllText( @"log.txt", string.Empty );
@@ -204,9 +205,17 @@ namespace SESDAD {
 
             }
 
+            // Obter port mais alto para criar os brokers extra
+            /*int maxPort = 0;
+            foreach ( FileParsing.Process processData in config.processes ) {
+                int port;
+                if ( Int32.TryParse( processData.port, out port ) ) {
+                    maxPort = System.Math.Max( maxPort, port );
+                }
+            }
+
             // Criar Brokers de backup
-            // Falta resolver o problema dos ports desconhecidos
-            /*foreach ( FileParsing.Process processData in config.processes ) {
+            foreach ( FileParsing.Process processData in config.processes ) {
                 if ( processData.type == FileParsing.ProcessType.Broker ) {
 
                     //Puppetmaster com o ip do processo
@@ -217,24 +226,58 @@ namespace SESDAD {
                     // Passing zero so that the broker selects an optional port??
 
                     // Criar o segundo e terceiro brokers a partir da informacao do primeiro broker
-                    string arguments = "0" + " " + processData.serviceName + " " + processData.name + "_1" + " " + config.GetOrdering() + " " + config.GetRoutingPolicy() + " " + config.GetLoggingLevel();
+                    int port1 = maxPort + 1;
+                    int port2 = maxPort + 2;
+                    string arguments = port1.ToString() + " " + processData.serviceName + " " + processData.name + "_1" + " " + config.GetOrdering() + " " + config.GetRoutingPolicy() + " " + config.GetLoggingLevel();
                     pup.CreateBroker( arguments );
-                    arguments = "0" + " " + processData.serviceName + " " + processData.name + "_2" + " " + config.GetOrdering() + " " + config.GetRoutingPolicy() + " " + config.GetLoggingLevel();
+                    arguments = port2.ToString() + " " + processData.serviceName + " " + processData.name + "_2" + " " + config.GetOrdering() + " " + config.GetRoutingPolicy() + " " + config.GetLoggingLevel();
                     pup.CreateBroker( arguments );
 
-                    IPuppetBroker obj_1 = (IPuppetBroker)Activator.GetObject(
-                          typeof( IPuppetBroker ),
-                          processData.url + "_1" );
+                    // Prepare port for next iteration
+                    maxPort += 2;
 
-                    IPuppetBroker obj_2 = (IPuppetBroker)Activator.GetObject(
+                    // tcp://localhost:8086/broker
+                    string broker1Url = "tcp://" + processData.ip + ":" + port1.ToString() + "/" + processData.serviceName;
+                    string broker2Url = "tcp://" + processData.ip + ":" + port2.ToString() + "/" + processData.serviceName;
+
+                    // Obter interfaces dos processos para adicionar aos dicionarios
+                    IPuppetBroker broker_1 = (IPuppetBroker)Activator.GetObject(
                                               typeof( IPuppetBroker ),
-                                              processData.url + "_2" );
+                                              broker1Url  );
+                    IPuppetBroker broker_2 = (IPuppetBroker)Activator.GetObject(
+                                              typeof( IPuppetBroker ),
+                                              broker2Url );
 
-                    PuppetMaster.brokers.Add( processData.name + "_1", obj_1 );
-                    PuppetMaster.brokers.Add( processData.name + "_2", obj_2 );
+                    PuppetMaster.brokers.Add( processData.name + "_1", broker_1 );
+                    PuppetMaster.brokers.Add( processData.name + "_2", broker_2 );
 
-                    PuppetMaster.processes.Add( processData.name + "_1", (IPuppetProcess)obj_1 );
-                    PuppetMaster.processes.Add( processData.name + "_2", (IPuppetProcess)obj_2 );
+                    IPuppetProcess brokerP_1 = (IPuppetProcess)Activator.GetObject(
+                                              typeof( IPuppetBroker ),
+                                              broker1Url );
+                    IPuppetProcess brokerP_2 = (IPuppetProcess)Activator.GetObject(
+                                              typeof( IPuppetBroker ),
+                                              broker2Url );
+
+                    PuppetMaster.processes.Add( processData.name + "_1", brokerP_1 );
+                    PuppetMaster.processes.Add( processData.name + "_2", brokerP_2 );
+
+                    // Relacionar brokers de backup com o site e os brokers principais
+                    //FileParsing.Process newbrokerProcess1 = new FileParsing.Process( processData.name + "_1", broker1Url, processData.GetSite(), processData.type );
+                    //FileParsing.Process newbrokerProcess2 = new FileParsing.Process( processData.name + "_2", broker2Url, processData.GetSite(), processData.type );
+
+                    // Join these processes in a BrokerNode
+                    BrokerNode node = new BrokerNode();
+
+                    IPuppetBroker originalBroker;
+                    brokers.TryGetValue( processData.name, out originalBroker );
+                    node.brokers.Add( originalBroker );
+                    node.brokers.Add( broker_1 );
+                    node.brokers.Add( broker_2 );
+
+                    node.site = processData.GetSite();
+
+                    // Add this node under the name of the original node
+                    brokerNodes.Add( processData.name, node );
                 }
             }*/
 
