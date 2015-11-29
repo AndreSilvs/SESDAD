@@ -14,7 +14,7 @@ using System.Threading;
 namespace SESDAD
 {
     public delegate void PublishPuppetLog( string message );
-    public delegate void PublishTopicDelegate( Event ev );
+    public delegate void PublishTopicDelegate( Event ev, String name );
 
 
     struct EventCounter {
@@ -99,10 +99,10 @@ namespace SESDAD
         public static void PublishEvents( int numberEvents, string topic, int interval_ms ) {
             for ( int i = 0; i < numberEvents; ++i ) {
                 //Publisher.broker.SendContent(new Event(topicname,"banana"));
-                PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContentPub );
+                PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContent );
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 EventCounter eCounter = getCountAndIncrement( topic );
-                IAsyncResult remAr = del.BeginInvoke( new Event( topic, Publisher.name + "_" + eCounter.topicCounter, Publisher.name, eCounter.topicCounter, eCounter.globalCounter  ), remoteCallback, null );
+                IAsyncResult remAr = del.BeginInvoke( new Event( topic, Publisher.name + "_" + eCounter.topicCounter, Publisher.name, eCounter.topicCounter, eCounter.globalCounter  ), Publisher.name, remoteCallback, null );
 
                 //Publisher.puppetMaster.Log( "PubEvent" );
                 PublishPuppetLog logDel = new PublishPuppetLog( Publisher.puppetMaster.Log );

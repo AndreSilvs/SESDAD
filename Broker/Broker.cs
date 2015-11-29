@@ -269,138 +269,10 @@ namespace SESDAD
         }
 
         //Broker
-        public void SendContent( Event evt ) {
-            //Console.WriteLine( "Send Content: " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum.ToString() );
-            lock ( Broker.subscriptionMutex ) {
-                if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
-                    // FILTERING: TOPIC EVENT COUNTER
-                    Broker.publisherTopics.AddEvent( evt.PublisherName, evt );
-
-                    PublisherTopicRegister pRegister = Broker.publisherTopics.GetPublisherTopic( evt.PublisherName );
-
-                    //lock ( pRegister.mutex ) {
-                    //Console.WriteLine( "Foreach" );
-                        foreach ( Event orderedEvent in pRegister.GetLastOrderedEvents( evt.Topic ) ) {
-                            //Console.WriteLine( "Send" );
-                            Broker.SendContent( orderedEvent );
-
-                            if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
-                                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum ); } ).Start();
-                            }
-                        }
-                       // Console.WriteLine( "After foreach" );
-                    //}
-                }
-                else {
-                    // FLOODING: EVENT COUNTER
-                    Broker.publisherEvents.AddEvent( evt );
-
-                    EventListFlooding eList = Broker.publisherEvents.GetEventList( evt.PublisherName );
-                    //lock ( eList.mutex ) {
-                        foreach ( Event orderedEvent in eList.GetOrderedEventsUpToDate() ) {
-                            Broker.SendContent( orderedEvent );
-
-                           // Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
-                            if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
-                                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + ", " + orderedEvent.PublisherName + ", " + orderedEvent.Topic + ", " + orderedEvent.TopicEventNum ); } ).Start();
-                            }
-                        }
-                    //}
-                }
-            } // End of lock
-        }
-
-        public void SendContentSpecial(Event evt, String name)
+        public void SendContent(Event evt, String name)
         {
-
-            if (Broker.ordering == FileParsing.Ordering.Fifo)
+            new Task(() =>
             {
-                Console.WriteLine("fifo");
-                lock (Broker.subscriptionMutex)
-                {
-                    if (Broker.routing == FileParsing.RoutingPolicy.Filter)
-                    {
-
-                    }
-                    else
-                    {
-                        // FLOODING: EVENT COUNTER
-                        Broker.publisherEvents.AddEvent(evt);
-
-                        EventListFlooding eList = Broker.publisherEvents.GetEventList(evt.PublisherName);
-                        //lock ( eList.mutex ) {
-                        foreach (Event orderedEvent in eList.GetOrderedEventsUpToDate())
-                        {
-                            Broker.SendContentSpecial(orderedEvent, name);
-
-                            // Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
-                            if (Broker.logging == FileParsing.LoggingLevel.Full)
-                            {
-                                new Task(() => { Broker.puppetMaster.Log("BroEvent " + Broker.name + ", " + orderedEvent.PublisherName + ", " + orderedEvent.Topic + ", " + orderedEvent.TopicEventNum); }).Start();
-                            }
-                        }
-                    }
-                }
-            }
-
-            else
-            {
-                Broker.SendContentSpecial(evt, name);
-                if (Broker.logging == FileParsing.LoggingLevel.Full)
-                {
-                    new Task(() => { Broker.puppetMaster.Log("BroEvent " + Broker.name + ", " + evt.PublisherName + ", " + evt.Topic + ", " + evt.TopicEventNum); }).Start();
-                }
-            }
-        }
-
-        public void SendContentPub(Event evt)
-        {
-            if (Broker.ordering == FileParsing.Ordering.Fifo)
-            {
-                Console.WriteLine("fifo");
-                lock (Broker.subscriptionMutex)
-                {
-                    if (Broker.routing == FileParsing.RoutingPolicy.Filter)
-                    {
-
-                    }
-                    else
-                    {
-                        // FLOODING: EVENT COUNTER
-                        Broker.publisherEvents.AddEvent(evt);
-
-                        EventListFlooding eList = Broker.publisherEvents.GetEventList(evt.PublisherName);
-                        //lock ( eList.mutex ) {
-                        foreach (Event orderedEvent in eList.GetOrderedEventsUpToDate())
-                        {
-                            Broker.SendContent(orderedEvent);
-
-                            // Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
-                            if (Broker.logging == FileParsing.LoggingLevel.Full)
-                            {
-                                new Task(() => { Broker.puppetMaster.Log("BroEvent " + Broker.name + ", " + orderedEvent.PublisherName + ", " + orderedEvent.Topic + ", " + orderedEvent.TopicEventNum); }).Start();
-                            }
-                        }
-                    }
-                }
-            }
-
-            else
-            {
-                Broker.SendContent(evt);
-                if (Broker.logging == FileParsing.LoggingLevel.Full)
-                {
-                    new Task(() => { Broker.puppetMaster.Log("BroEvent " + Broker.name + ", " + evt.PublisherName + ", " + evt.Topic + ", " + evt.TopicEventNum); }).Start();
-                }
-            }
-        }
-
-
-        public void SendContentUp( Event evt ) {
-
-            if ( Broker.parent != null ) {
-                // System.Console.WriteLine(evt.EventCounter);
-
                 lock (Broker.monitorLock)
                 {
                     while (Broker.frozen)
@@ -409,21 +281,58 @@ namespace SESDAD
                     }
                 }
 
-                System.Console.WriteLine("Shit");
+            if (Broker.ordering == FileParsing.Ordering.Fifo)
+            {
+                lock (Broker.subscriptionMutex)
+                {
+                    if (Broker.routing == FileParsing.RoutingPolicy.Filter)
+                    {
+                        // FILTERING: TOPIC EVENT COUNTER
+                        Broker.publisherTopics.AddEvent(evt.PublisherName, evt);
 
-                SendContentDelegate del = new SendContentDelegate(Broker.parent.SendContentUp);
-                AsyncCallback remoteCallback = new AsyncCallback(PublishAsyncCallBack);
-                IAsyncResult remAr = del.BeginInvoke(evt, remoteCallback, null);
-            }
-            else {
-                SendContentDelegate del = new SendContentDelegate( this.SendContent );
-                AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
-                IAsyncResult remAr = del.BeginInvoke( evt, remoteCallback, null );
+                        PublisherTopicRegister pRegister = Broker.publisherTopics.GetPublisherTopic(evt.PublisherName);
+
+                        foreach (Event orderedEvent in pRegister.GetLastOrderedEvents(evt.Topic))
+                        {
+                            //Console.WriteLine( "Send" );
+                            Broker.SendContent(orderedEvent, name);
+
+                            if (Broker.logging == FileParsing.LoggingLevel.Full)
+                            {
+                                new Task(() => { Broker.puppetMaster.Log("BroEvent " + Broker.name + " " + orderedEvent.PublisherName + " " + orderedEvent.Topic + " " + orderedEvent.TopicEventNum); }).Start();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // FLOODING: EVENT COUNTER
+                        Broker.publisherEvents.AddEvent(evt);
+
+                        EventListFlooding eList = Broker.publisherEvents.GetEventList(evt.PublisherName);
+                        //lock ( eList.mutex ) {
+                        foreach (Event orderedEvent in eList.GetOrderedEventsUpToDate())
+                        {
+                            Broker.SendContent(orderedEvent, name);
+
+                            // Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
+                            if (Broker.logging == FileParsing.LoggingLevel.Full)
+                            {
+                                new Task(() => { Broker.puppetMaster.Log("BroEvent " + Broker.name + ", " + orderedEvent.PublisherName + ", " + orderedEvent.Topic + ", " + orderedEvent.TopicEventNum); }).Start();
+                            }
+                        }
+                    }
+                }
             }
 
-            /*if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
-                new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + " " + evt.PublisherName + " " + evt.Topic + " " + evt.TopicEventNum ); } ).Start();
-            }*/
+            else
+            {
+                Broker.SendContent(evt, name);
+                if (Broker.logging == FileParsing.LoggingLevel.Full)
+                {
+                    new Task(() => { Broker.puppetMaster.Log("BroEvent " + Broker.name + ", " + evt.PublisherName + ", " + evt.Topic + ", " + evt.TopicEventNum); }).Start();
+                }
+            }
+            }).Start();
         }
 
         public void Subscribe( string processname, string topic ) {
@@ -448,34 +357,20 @@ namespace SESDAD
                             // Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
                             Broker.topicSubscribers.AddTopicSubscriber(topic, processname, sub);
 
-                            if (Broker.parent != null)
+                            foreach (NamedBroker broker in Broker.children)
                             {
-                                Broker.parent.SubscribeBroker(Broker.name, topic);
+                                if (broker.name != processname)
+                                {
+                                    broker.broker.SubscribeBroker(Broker.name, topic);
+                                }
+                                //coiso.broker.SendContent( evt );
                             }
                         }
                     }
 
 
                 }).Start();
-          //  }
 
-            /*else
-            {
-                ISubscriber sub = Broker.subscribers.Find(n => n.name == processname).subcriber;
-                if (sub != null)
-                {
-                    lock (Broker.subscriptionMutex)
-                    {
-                        // Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
-                        Broker.topicSubscribers.AddTopicSubscriber(topic, processname, sub);
-
-                        if (Broker.parent != null)
-                        {
-                            Broker.parent.SubscribeBroker(Broker.name, topic);
-                        }
-                    }
-                }
-            }*/
         }
         public void Unsubscribe( string processname, string topic ) {
 
@@ -500,8 +395,15 @@ namespace SESDAD
                         bool b = !Broker.topicBrokers.HasTopic( topic );
                         if ( a && b ) {
                             Broker.EraseRelatedEvents( topic );
-                            Broker.parent.UnsubscribeBroker( Broker.name, topic );
-                        }
+                                foreach (NamedBroker broker in Broker.children)
+                                {
+                                    if (broker.name != processname)
+                                    {
+                                        broker.broker.UnsubscribeBroker(Broker.name, topic);
+                                    }
+                                    //coiso.broker.SendContent( evt );
+                                }
+                            }
                     }
                 }
             }
@@ -525,10 +427,15 @@ namespace SESDAD
                     //Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
                     Broker.topicBrokers.AddTopicBroker( topic, processname, bro );
 
-                    if ( Broker.parent != null ) {
-                        Broker.parent.SubscribeBroker( Broker.name, topic );
+                        foreach (NamedBroker broker in Broker.children)
+                        {
+                            if (broker.name != processname)
+                            {
+                                broker.broker.SubscribeBroker(Broker.name, topic);
+                            }
+                            //coiso.broker.SendContent( evt );
+                        }
                     }
-                }
             }
             }).Start();
         }
@@ -555,8 +462,15 @@ namespace SESDAD
                         bool b = !Broker.topicBrokers.HasTopic( topic );
                         if ( a && b ) {
                             Broker.EraseRelatedEvents( topic );
-                            Broker.parent.UnsubscribeBroker( Broker.name, topic );
-                        }
+                            foreach (NamedBroker broker in Broker.children)
+                            {
+                                if (broker.name != processname)
+                                {
+                                    broker.broker.SubscribeBroker(Broker.name, topic);
+                                }
+                                //coiso.broker.SendContent( evt );
+                            }
+                            }
                     }
                 }
             }
@@ -646,57 +560,33 @@ namespace SESDAD
             System.Console.ReadLine();
         }
 
-        static public void SendContentSpecial(Event evt, String name)
+        static public void SendContent(Event evt, String name)
         {
-            // Flooding
-            foreach (NamedSubscriber coiso in Broker.subscribers)
+            if (Broker.routing == FileParsing.RoutingPolicy.Filter)
             {
-                coiso.subcriber.ReceiveContent(evt);
+                SendContentFiltering(evt, name);
             }
 
-            foreach (NamedBroker coiso in Broker.children)
+            else
             {
-                if (coiso.name != name)
-                {
-                    new Task(() => { coiso.broker.SendContentSpecial(evt, Broker.name); }).Start();
-                }
-                //coiso.broker.SendContent( evt );
-            }
-        }
-
-            static public void SendContent(Event evt)
-        {
-            //System.Console.WriteLine(evt.EventCounter);
-
-            //Broker.puppetMaster.Log("BroEvent " + Broker.name + " something somethin");
-           /* lock (Broker.monitorLock)
-            {
-                while (Broker.frozen)
-                {
-                    Monitor.Wait(Broker.monitorLock);
-                }
-            }*/
-
-            if ( Broker.routing == FileParsing.RoutingPolicy.Filter ) {
-                // Filtering
-               // Console.WriteLine( "Into filtering." );
-                SendContentFiltering( evt );
-
-            }
-            else {
                 // Flooding
-                foreach ( NamedSubscriber coiso in Broker.subscribers ) {
-                    coiso.subcriber.ReceiveContent( evt );
+                foreach (NamedSubscriber subscriber in Broker.subscribers)
+                {
+                    subscriber.subcriber.ReceiveContent(evt);
                 }
 
-                foreach ( NamedBroker coiso in Broker.children ) {
-                    new Task( () => { coiso.broker.SendContentSpecial( evt, Broker.name ); } ).Start();
+                foreach (NamedBroker broker in Broker.children)
+                {
+                    if (broker.name != name)
+                    {
+                        new Task(() => { broker.broker.SendContent(evt, Broker.name); }).Start();
+                    }
                     //coiso.broker.SendContent( evt );
                 }
             }
         }
 
-        static public void SendContentFiltering( Event evt ) {
+        static public void SendContentFiltering( Event evt, String name ) {
             var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
             foreach ( NamedSubscriber sub in subs ) {
                 try {
@@ -710,7 +600,7 @@ namespace SESDAD
             var bros = topicBrokers.FindAllBrokers( evt.Topic );
             foreach ( NamedBroker bro in bros ) {
                 //bro.broker.SendContent( evt );
-                new Task( () => { bro.broker.SendContent( evt ); } ).Start();
+                new Task( () => { bro.broker.SendContent( evt, Broker.name ); } ).Start();
             }
         }
 
