@@ -3,9 +3,7 @@ Subscriber subscriber1 Subscribe /animal/*
 Subscriber subscriber2 Subscribe /animal/*
 Wait 2000
 Publisher publisher1 Publish 3 Ontopic /animal/chordata/vertebrado/peixe Interval 500
-Freeze broker1
 Wait 2000
 Publisher publisher1 Publish 3 Ontopic /animal/chordata/vertebrado/peixe Interval 500
 Wait 3000
-Unfreeze broker1
 Status

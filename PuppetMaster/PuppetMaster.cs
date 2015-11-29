@@ -307,12 +307,13 @@ namespace SESDAD {
                                 FileParsing.Process parentData = site.parent.broker;
                                 //Regista pai no filho
                                 String parentUrl = parentData.url;
+                                String parentName = parentData.name;
 
-                                obj.RegisterParent(parentUrl);
+                                obj.RegisterChild(parentUrl, parentName);
 
                                 //Regista filho no pai
 
-                                String parentName = parentData.name;
+                               // String parentName = parentData.name;
 
                                 IPuppetBroker objParent;
 

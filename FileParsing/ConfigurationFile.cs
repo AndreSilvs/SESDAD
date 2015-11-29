@@ -131,9 +131,9 @@ namespace SESDAD {
                         Match match = pattern.Match( line );
                         if ( match.Success ) {
                             string type = match.Groups[ "type" ].Value;
-                            if ( type == "fifo" ) { ordering = Ordering.Fifo; }
-                            else if ( type == "total" ) { ordering = Ordering.Total; }
-                            else if ( type == "no" ) { ordering = Ordering.No; }
+                            if ( type == "FIFO" ) { ordering = Ordering.Fifo; }
+                            else if ( type == "TOTAL" ) { ordering = Ordering.Total; }
+                            else if ( type == "NO" ) { ordering = Ordering.No; }
                         }
                     }
                     else if ( line.StartsWith( "Site" ) ) {
