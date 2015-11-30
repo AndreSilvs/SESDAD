@@ -97,6 +97,11 @@ namespace SESDAD
 
             //Console.WriteLine("I'm a puppet");
         }
+        /*public void RegisterSequencer( string address ) {
+            Subscriber.sequencer = (ISequencer)Activator.GetObject(
+                typeof( ISequencer ),
+                address );
+        }*/
     }
 
 
@@ -106,6 +111,7 @@ namespace SESDAD
     {
         static public IBroker broker;
         static public IPuppetMaster puppetMaster;
+        //static public ISequencer sequencer;
         static public string name;
 
         static public bool frozen = false;

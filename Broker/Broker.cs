@@ -485,6 +485,18 @@ namespace SESDAD
 
             //Console.WriteLine("I'm a puppet");
         }
+        public void RegisterSequencer( string address ) {
+            Broker.sequencer = (ISequencer)Activator.GetObject(
+                typeof( ISequencer ),
+                address );
+
+            /*if ( Broker.sequencer != null ) {
+                Console.WriteLine( "Sequencer number test: " + Broker.sequencer.GetNextSequenceNumber() );
+            }
+            else {
+                Console.WriteLine( "No sequencer found." );
+            }*/
+        }
     }
     class Broker
     {
@@ -497,6 +509,7 @@ namespace SESDAD
         static public IBroker parent;
 
         static public IPuppetMaster puppetMaster;
+        static public ISequencer sequencer;
 
         static public TopicSubscriberList topicSubscribers = new TopicSubscriberList();
         static public TopicBrokerList topicBrokers = new TopicBrokerList();

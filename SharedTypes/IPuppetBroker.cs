@@ -4,6 +4,8 @@ using System.Text;
 
 namespace SESDAD {
     public interface IPuppetBroker {
+        void RegisterSequencer( string address );
+
         void RegisterSubscriber( string address, string name );
         void RegisterPublisher( string address );
 

@@ -66,6 +66,12 @@ namespace SESDAD
 
             //Console.WriteLine("I'm a puppet");
         }
+
+        /*public void RegisterSequencer( string address ) {
+            Publisher.sequencer = (ISequencer)Activator.GetObject(
+                typeof( ISequencer ),
+                address );
+        }*/
     }
 
     class Publisher
@@ -77,6 +83,7 @@ namespace SESDAD
         static object lockObject = new object();
 
         static public IPuppetMaster puppetMaster;
+        //static public ISequencer sequencer;
 
         static Dictionary<string, int> topicCount = new Dictionary<string, int>();
 

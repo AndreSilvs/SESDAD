@@ -281,6 +281,7 @@ namespace SESDAD {
                 }
             }*/
 
+            // Make each process known to its neighbours
             foreach (FileParsing.Process processData in config.processes)
             {
                 IPuppetProcess objProcess;
@@ -369,7 +370,25 @@ namespace SESDAD {
 
             }
 
+            if ( config.GetOrdering() == FileParsing.Ordering.Total ) {
+                // Create Sequencer process
+                Process seqProcess = new Process();
 
+                // Configure the process using the StartInfo properties.
+                seqProcess.StartInfo.FileName = @"..\..\..\Sequencer\bin\Debug\Sequencer.exe";
+
+                seqProcess.Start();
+
+                string seqUrl = "tcp://localhost:8999/seq";
+
+                // Send sequencer url to all processes
+                foreach ( var broker in brokers ) {
+                    IPuppetBroker bro = broker.Value;
+                    bro.RegisterSequencer( seqUrl );
+                }
+            }
+
+            // Puppet Master main loop
             System.Console.WriteLine( "Hi, I'm a puppet master..." );
 
             Console.WriteLine( "Enter commands: " );

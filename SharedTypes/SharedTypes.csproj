@@ -95,6 +95,7 @@
     <Compile Include="IPuppetProcess.cs" />
     <Compile Include="IPuppetPublisher.cs" />
     <Compile Include="IPuppetSubscriber.cs" />
+    <Compile Include="ISequencer.cs" />
     <Compile Include="ISubscriber.cs" />
     <Compile Include="IBroker.cs" />
   </ItemGroup>
