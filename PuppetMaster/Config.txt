@@ -1,6 +1,6 @@
 LoggingLevel full
-RoutingPolicy filtering
-Ordering TOTAL
+RoutingPolicy flooding
+Ordering NO
 
 Site site0 Parent none
 Site site1 Parent site0

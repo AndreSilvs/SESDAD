@@ -7,6 +7,7 @@ namespace SESDAD
     public interface IBroker
     {
         void SendContent(Event evt, String name);
+        void SendContentPub(Event evt, String name);
 
         void Subscribe( string processname, string topic );
         void Unsubscribe( string processname, string topic );
