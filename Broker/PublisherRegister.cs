@@ -102,5 +102,22 @@ namespace SESDAD {
                 }
             }
         }
+        public void EraseSubTopicsReplication( string topic, TopicSubscriberList subs, BrokerCircleSubscriptionTable bros ) {
+            string matchTopic = topic.Substring( 0, topic.Count() - 1 );
+            HashSet<string> existingSubTopics = new HashSet<string>();
+            foreach ( var pubEntry in dictionary ) {
+                foreach ( string iTopic in pubEntry.Value.GetListTopics() ) {
+                    if ( iTopic.StartsWith( matchTopic ) ) {
+                        existingSubTopics.Add( iTopic );
+                    }
+                }
+            }
+
+            foreach ( string matchingTopic in existingSubTopics ) {
+                if ( subs.HowManySubscribed( matchingTopic ) + bros.HowManySubscribed( matchingTopic ) == 0 ) {
+                    EraseTopic( matchingTopic );
+                }
+            }
+        }
     }
 }

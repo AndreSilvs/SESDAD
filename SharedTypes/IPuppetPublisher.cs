@@ -5,6 +5,7 @@ using System.Text;
 namespace SESDAD {
     public interface IPuppetPublisher {
         void RegisterBroker(string address);
+        void RegisterBrokers( List<string> addresses );
 
         void ForcePublish( int numberEvents, string topicname, int interval_ms );
 

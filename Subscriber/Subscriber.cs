@@ -24,6 +24,15 @@ namespace SESDAD
 
             //Console.WriteLine("I have a ~broker");
         }
+        public void RegisterBrokers( List<string> addresses ) {
+            // Subscriber doesn't need to know the broker's name
+            BrokerCircle brokerCircle = new BrokerCircle( "" );
+            foreach ( string address in addresses ) {
+                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
+            }
+
+            Subscriber.brokerCircle = brokerCircle;
+        }
 
         public void Crash()
         {
@@ -114,6 +123,9 @@ namespace SESDAD
         //static public ISequencer sequencer;
         static public string name;
 
+        // Replication
+        static public BrokerCircle brokerCircle;
+
         static public bool frozen = false;
 
         static public object monitorLock = new object();
@@ -142,7 +154,13 @@ namespace SESDAD
            // Console.WriteLine( "Subscribing to: " + topic );
 
             //broker.Subscribe( name, topic );
-            SubscriberDelegate del = new SubscriberDelegate( broker.Subscribe );
+
+            // No replication
+            //SubscriberDelegate del = new SubscriberDelegate( broker.Subscribe );
+
+            // Replication
+            SubscriberDelegate del = new SubscriberDelegate( brokerCircle.Subscribe );
+
             AsyncCallback remoteCallback = new AsyncCallback( SubscriberCallback );
             IAsyncResult remAr = del.BeginInvoke( name, topic, remoteCallback, null );
 
@@ -154,6 +172,7 @@ namespace SESDAD
 
             //broker.Unsubscribe( name, topic );
             SubscriberDelegate del = new SubscriberDelegate( broker.Unsubscribe );
+            //SubscriberDelegate del = new SubscriberDelegate( brokerCircle.Unsubscribe );
             AsyncCallback remoteCallback = new AsyncCallback( SubscriberCallback );
             IAsyncResult remAr = del.BeginInvoke( name, topic, remoteCallback, null );
 

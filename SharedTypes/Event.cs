@@ -12,6 +12,7 @@ namespace SESDAD
         public string Topic;
         public string Content;
         public string PublisherName;
+        public string LastSenderName;
         public int TopicEventNum;
         public int EventCounter;
 
@@ -20,6 +21,7 @@ namespace SESDAD
             Topic = topic;
             Content = content;
             PublisherName = publisherName;
+            LastSenderName = publisherName;
             TopicEventNum = eventNum;
             EventCounter = counter;
         }

@@ -12,6 +12,13 @@ namespace SESDAD {
         void RegisterParent( string address );
         void RegisterChild( string address, string name );
 
+        // Original name is for the purposes of sending events through the network
+        // There's no need to check against all brokers' names in the same site, just the original name
+        void RegisterReplicas( List<string> addresses, string originalName, int id );
+
+        // addresses of all replicas (including the original), name of the main broker (broker circle)
+        void RegisterChildReplication( List<string> addresses, string name );
+
         /*void Status();
 
         void Freeze();

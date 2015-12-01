@@ -32,6 +32,16 @@ namespace SESDAD
             Console.WriteLine("I have a ~broker");
         }
 
+        public void RegisterBrokers( List<string> addresses ) {
+            // Publisher doesn't need to know the broker's name
+            BrokerCircle brokerCircle = new BrokerCircle( "" );
+            foreach ( string address in addresses ) {
+                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
+            }
+
+            Publisher.brokerCircle = brokerCircle;
+        }
+
         public void ForcePublish( int numberEvents, string topicname, int interval_ms ) {
             Console.WriteLine( "Publishing: " + numberEvents.ToString() + " " + topicname + " " + interval_ms.ToString() );
             new Task(() => { Publisher.PublishEvents( numberEvents, topicname, interval_ms ); } ).Start();
@@ -79,6 +89,9 @@ namespace SESDAD
         static public IBroker broker;
         static public string name;
 
+        // For replication
+        static public BrokerCircle brokerCircle;
+
         static int count = 0;
         static object lockObject = new object();
 
@@ -106,7 +119,13 @@ namespace SESDAD
         public static void PublishEvents( int numberEvents, string topic, int interval_ms ) {
             for ( int i = 0; i < numberEvents; ++i ) {
                 //Publisher.broker.SendContent(new Event(topicname,"banana"));
-                PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContentPub );
+                
+                // No replication
+                //PublishTopicDelegate del = new PublishTopicDelegate( Publisher.broker.SendContentPub );
+
+                // Replication
+                PublishTopicDelegate del = new PublishTopicDelegate( Publisher.brokerCircle.SendContentPub );
+
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 EventCounter eCounter = getCountAndIncrement( topic );
                 IAsyncResult remAr = del.BeginInvoke( new Event( topic, Publisher.name + "_" + eCounter.topicCounter, Publisher.name, eCounter.topicCounter, eCounter.globalCounter  ), Publisher.name, remoteCallback, null );

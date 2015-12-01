@@ -8,191 +8,11 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Messaging;
-using System.Text.RegularExpressions;
 using System.Net.Sockets;
 using System.Threading;
 
 namespace SESDAD
 {
-    public class NamedSubscriber {
-        public string name;
-        public ISubscriber subcriber;
-
-        public NamedSubscriber( string name, ISubscriber sub ) {
-            this.name = name;
-            this.subcriber = sub;
-        }
-    }
-    public class NamedBroker {
-        public string name;
-        public IBroker broker;
-
-        public NamedBroker( string name, IBroker bro ) {
-            this.name = name;
-            this.broker = bro;
-        }
-    }
-    public class TopicSubscribers {
-        public string topic;
-        public List<NamedSubscriber> subscribers = new List<NamedSubscriber>();
-
-        public bool HasSubscribers() { return subscribers.Count > 0; }
-        public void AddSubscriber( string name, ISubscriber sub ) {
-            if ( !subscribers.Exists( n => n.name == name ) ) {
-                subscribers.Add( new NamedSubscriber( name, sub ) );
-            }
-        }
-        public void RemoveSubscriber( string name ) {
-            subscribers.RemoveAll( n => n.name == name );
-        }
-    }
-
-    public class TopicBrokers {
-        public string topic;
-        public List<NamedBroker> brokers = new List<NamedBroker>();
-
-        public bool HasBrokers() { return brokers.Count > 0; }
-        public void AddBroker( string name, IBroker bro ) {
-            if ( !brokers.Exists( n => n.name == name ) ) {
-                brokers.Add( new NamedBroker( name, bro ) );
-            }
-        }
-        public void RemoveBroker( string name ) {
-            brokers.RemoveAll( n => n.name == name );
-        }
-    }
-
-    public class TopicSubscriberList {
-
-        public List<TopicSubscribers> topicSubscribers = new List<TopicSubscribers>();
-        private object listLock = new object();
-
-        public void AddTopicSubscriber( string topic, string name, ISubscriber sub ) {
-            TopicSubscribers entry = FindTopic( topic );
-            if ( entry != null ) {
-                entry.AddSubscriber( name, sub );
-                return;
-            }
-            entry = new TopicSubscribers();
-            entry.topic = topic;
-            entry.AddSubscriber( name, sub );
-            topicSubscribers.Add( entry );
-        }
-        public void RemoveTopicSubscriber( string topic, string name ) {
-            TopicSubscribers entry = FindTopic( topic );
-            if ( entry != null ) {
-                entry.RemoveSubscriber( name );
-                if ( !entry.HasSubscribers() ) {
-                    topicSubscribers.Remove( entry );
-                }
-            }
-        }
-
-        public TopicSubscribers FindTopic( string topic ) {
-            return topicSubscribers.Find( n => n.topic == topic );
-        }
-        public HashSet<NamedSubscriber> FindAllSubscribers( string topic ) {
-            HashSet<NamedSubscriber> subs = new HashSet<NamedSubscriber>();
-
-            // Topic may be:  "/edu/ulisboa"
-            // Sub topic may be "/edu/*"
-            // So we're checking if the topic fits in the subscribed sub topic
-            foreach ( TopicSubscribers subTopic in topicSubscribers ) {
-                bool match = false;
-                if ( subTopic.topic == topic ) {
-                    match = true;
-                }
-                else if ( subTopic.topic.EndsWith( "/*" ) ) {
-                    string regexTopic = "^" + subTopic.topic.Substring( 0, subTopic.topic.Length - 1 ) + ".*$";
-                    Regex regex = new Regex( regexTopic );
-                    if ( regex.IsMatch( topic ) ) {
-                        match = true;
-                    }
-                }
-
-                if ( match ) {
-                    foreach ( NamedSubscriber sub in subTopic.subscribers ) {
-                        subs.Add( sub );
-                    }
-                }
-            }
-            return subs;
-        }
-
-        public bool HasTopic( string topic ) {
-            return topicSubscribers.Exists( n => n.topic == topic );
-        }
-        public int HowManySubscribed( string topic ) {
-            return (HasTopic( topic ) ? FindTopic( topic ).subscribers.Count : 0 );
-        }
-    }
-
-    public class TopicBrokerList {
-
-        public List<TopicBrokers> topicBrokers = new List<TopicBrokers>();
-
-        public void AddTopicBroker( string topic, string name, IBroker bro ) {
-            TopicBrokers entry = FindTopic( topic );
-            if ( entry != null ) {
-                entry.AddBroker( name, bro );
-                return;
-            }
-            entry = new TopicBrokers();
-            entry.topic = topic;
-            entry.AddBroker( name, bro );
-            topicBrokers.Add( entry );
-        }
-        public void RemoveTopicBroker( string topic, string name ) {
-            TopicBrokers entry = FindTopic( topic );
-            if ( entry != null ) {
-                entry.RemoveBroker( name );
-                if ( !entry.HasBrokers() ) {
-                    topicBrokers.Remove( entry );
-                }
-            }
-        }
-
-        public TopicBrokers FindTopic( string topic ) {
-            return topicBrokers.Find( n => n.topic == topic );
-        }
-        public HashSet<NamedBroker> FindAllBrokers( string topic ) {
-            HashSet<NamedBroker> bros = new HashSet<NamedBroker>();
-
-            // Topic may be:  "/edu/ulisboa"
-            // Sub topic may be "/edu/*"
-            // So we're checking if the topic fits in the subscribed sub topic
-            foreach ( TopicBrokers broTopic in topicBrokers ) {
-                bool match = false;
-                if ( broTopic.topic == topic ) {
-                    match = true;
-                }
-                else if ( broTopic.topic.EndsWith( "/*" ) ) {
-                    string regexTopic = "^" + broTopic.topic.Substring( 0, broTopic.topic.Length - 1 ) + ".*$";
-                    Regex regex = new Regex( regexTopic );
-                    if ( regex.IsMatch( topic ) ) {
-                        match = true;
-                    }
-                }
-
-                if ( match ) {
-                    foreach ( NamedBroker bro in broTopic.brokers ) {
-                        bros.Add( bro );
-                    }
-                }
-            }
-            return bros;
-        }
-
-        public bool HasTopic( string topic ) {
-            return topicBrokers.Exists( n => n.topic == topic );
-        }
-        public int HowManySubscribed( string topic ) {
-            return (HasTopic( topic ) ? FindTopic( topic ).brokers.Count : 0);
-        }
-    }
-
-
-
     class RemoteBroker : MarshalByRefObject, IBroker, IPuppetBroker, IPuppetProcess {
 
         public delegate void SendContentDelegate( Event ev );
@@ -204,6 +24,14 @@ namespace SESDAD
             return;
         }
 
+        //PuppetMaster - register replica neighbours
+        public void RegisterReplicas( List<string> addresses, string originalName, int id ) {
+            Broker.groupName = originalName;
+            Broker.replicationId = id;
+            foreach ( string address in addresses ) {
+                Broker.replicaBrokers.Add( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
+            }
+        }
 
         //PuppetMaster
         public void RegisterChild( string address, string name ) {
@@ -212,6 +40,16 @@ namespace SESDAD
                address ) ) );
 
             //Console.WriteLine( "I have a kid" );
+        }
+        // Puppet Master
+        public void RegisterChildReplication( List<string> addresses, string name ) {
+            BrokerCircle brokerCircle = new BrokerCircle( name );
+            foreach ( string address in addresses ) {
+                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
+            }
+
+            // Add circle to a list of neighbour circles
+            Broker.neighbourBrokers.Add( brokerCircle );
         }
 
         public void RegisterParent( string address ) {
@@ -273,6 +111,7 @@ namespace SESDAD
             if (Broker.ordering == FileParsing.Ordering.Total)
             {
                 evt.EventCounter = Broker.sequencer.GetNextSequenceNumber();
+                //Console.WriteLine( "Sending event- " + "Seq: " + evt.EventCounter + " Topic: " + evt.TopicEventNum + " Pub: " + evt.PublisherName );
             }
 
             SendContent(evt, name);
@@ -344,18 +183,17 @@ namespace SESDAD
                         //flooding 
                         else
                         {
-                            Broker.totalOrderEvents.AddEvent(evt);
-                            foreach (Event orderedEvent in Broker.totalOrderEvents.GetOrderedEventsUpToDate())
-                            {
-                                Broker.SendContent(orderedEvent, name);
+                            //lock ( Broker.totalOrderEvents.mutex ) {
+                                Broker.totalOrderEvents.AddEvent( evt );
+                                foreach ( Event orderedEvent in Broker.totalOrderEvents.GetOrderedEventsUpToDate() ) {
+                                    Broker.SendContent( orderedEvent, name );
 
-                                // Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
-                                if (Broker.logging == FileParsing.LoggingLevel.Full)
-                                {
-                                    new Task(() => { Broker.puppetMaster.Log("BroEvent " + Broker.name + ", " + orderedEvent.PublisherName + ", " + orderedEvent.Topic + ", " + orderedEvent.TopicEventNum); }).Start();
+                                    // Console.WriteLine( "orderedEvent.EventCounter: " + orderedEvent.EventCounter );
+                                    if ( Broker.logging == FileParsing.LoggingLevel.Full ) {
+                                        new Task( () => { Broker.puppetMaster.Log( "BroEvent " + Broker.name + ", " + orderedEvent.PublisherName + ", " + orderedEvent.Topic + ", " + orderedEvent.TopicEventNum ); } ).Start();
+                                    }
                                 }
-                            }
-
+                            //}
                         }
                     }
                 }
@@ -370,7 +208,8 @@ namespace SESDAD
             }).Start();
         }
 
-        public void Subscribe( string processname, string topic ) {
+        // No replication subscription
+        /*public void Subscribe( string processname, string topic ) {
 
            // if (Broker.frozen){
 
@@ -406,8 +245,8 @@ namespace SESDAD
 
                 }).Start();
 
-        }
-        public void Unsubscribe( string processname, string topic ) {
+        }*/
+        /*public void Unsubscribe( string processname, string topic ) {
 
             new Task(() =>
             {
@@ -425,26 +264,28 @@ namespace SESDAD
                    // Console.WriteLine( processname + " just unsubscribed from " + topic );
                     Broker.topicSubscribers.RemoveTopicSubscriber( topic, processname );
 
-                    if ( Broker.parent != null ) {
+                    //if ( Broker.parent != null ) {
                         bool a = !Broker.topicSubscribers.HasTopic( topic );
                         bool b = !Broker.topicBrokers.HasTopic( topic );
                         if ( a && b ) {
                             Broker.EraseRelatedEvents( topic );
-                                foreach (NamedBroker broker in Broker.children)
+                            foreach (NamedBroker broker in Broker.children)
+                            {
+                                if (broker.name != processname)
                                 {
-                                    if (broker.name != processname)
-                                    {
-                                        broker.broker.UnsubscribeBroker(Broker.name, topic);
-                                    }
-                                    //coiso.broker.SendContent( evt );
+                                    broker.broker.UnsubscribeBroker(Broker.name, topic);
                                 }
+                                //coiso.broker.SendContent( evt );
                             }
-                    }
+                        }
+
+                    //}
                 }
             }
             }).Start();
-        }
-        public void SubscribeBroker( string processname, string topic ) {
+        }*/
+        // No replication
+        /*public void SubscribeBroker( string processname, string topic ) {
 
             new Task(() =>
             {
@@ -473,8 +314,9 @@ namespace SESDAD
                     }
             }
             }).Start();
-        }
-        public void UnsubscribeBroker( string processname, string topic ) {
+        }*/
+        // No replication
+        /*public void UnsubscribeBroker( string processname, string topic ) {
 
             new Task(() =>
             {
@@ -510,6 +352,125 @@ namespace SESDAD
                 }
             }
             }).Start();
+        }*/
+
+        public void Subscribe( string processname, string topic ) {
+
+            // if (Broker.frozen){
+
+            new Task( () =>
+            {
+                lock ( Broker.monitorLock ) {
+                    while ( Broker.frozen ) {
+                        Monitor.Wait( Broker.monitorLock );
+                    }
+                }
+
+                ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
+                if ( sub != null ) {
+                    lock ( Broker.subscriptionMutex ) {
+                        // Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
+                        Broker.topicSubscribers.AddTopicSubscriber( topic, processname, sub );
+
+                        foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
+                            if ( broker.name != processname ) {
+                                broker.SubscribeBroker( Broker.groupName, topic );
+                            }
+                            //coiso.broker.SendContent( evt );
+                        }
+                    }
+                }
+
+
+            } ).Start();
+
+        }
+        public void Unsubscribe( string processname, string topic ) {
+
+            new Task( () => {
+                lock ( Broker.monitorLock ) {
+                    while ( Broker.frozen ) {
+                        Monitor.Wait( Broker.monitorLock );
+                    }
+                }
+
+                ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
+                if ( sub != null ) {
+                    lock ( Broker.subscriptionMutex ) {
+                        // Console.WriteLine( processname + " just unsubscribed from " + topic );
+                        Broker.topicSubscribers.RemoveTopicSubscriber( topic, processname );
+
+                        bool a = !Broker.topicSubscribers.HasTopic( topic );
+                        bool b = !Broker.subscriptionCircles.HasTopic( topic );
+                        if ( a && b ) {
+                            Broker.EraseRelatedEventsReplication( topic );
+                            foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
+                                if ( broker.name != processname ) {
+                                    broker.UnsubscribeBroker( Broker.groupName, topic );
+                                }
+                                //coiso.broker.SendContent( evt );
+                            }
+                        }
+                    }
+                }
+            } ).Start();
+        }
+        public void SubscribeBroker( string processname, string topic ) {
+
+            new Task( () => {
+                lock ( Broker.monitorLock ) {
+                    while ( Broker.frozen ) {
+                        Monitor.Wait( Broker.monitorLock );
+                    }
+                }
+
+                BrokerCircle bro = Broker.neighbourBrokers.Find( n => n.name == processname );
+                if ( bro != null ) {
+                    lock ( Broker.subscriptionMutex ) {
+                        //Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
+                        Broker.subscriptionCircles.AddTopicBroker( topic, bro );
+
+                        foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
+                            if ( broker.name != processname ) {
+                                broker.SubscribeBroker( Broker.groupName, topic );
+                            }
+                            //coiso.broker.SendContent( evt );
+                        }
+                    }
+                }
+            } ).Start();
+        }
+        public void UnsubscribeBroker( string processname, string topic ) {
+
+            new Task( () => {
+                lock ( Broker.monitorLock ) {
+                    while ( Broker.frozen ) {
+                        Monitor.Wait( Broker.monitorLock );
+                    }
+                }
+
+                BrokerCircle bro = Broker.neighbourBrokers.Find( n => n.name == processname );
+                if ( bro != null ) {
+                    lock ( Broker.subscriptionMutex ) {
+                        //  Console.WriteLine( "BRO " + processname + " just unsubscribed from " + topic );
+                        Broker.subscriptionCircles.RemoveTopicBroker( topic, processname );
+
+                        //if ( Broker.parent != null ) {
+                            bool a = !Broker.topicSubscribers.HasTopic( topic );
+                            bool b = !Broker.subscriptionCircles.HasTopic( topic );
+                            if ( a && b ) {
+                                Broker.EraseRelatedEvents( topic );
+                                foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
+                                    if ( broker.name != processname ) {
+                                        broker.SubscribeBroker( Broker.groupName, topic );
+                                    }
+                                    //coiso.broker.SendContent( evt );
+                                }
+                            }
+                        //}
+                    }
+                }
+            } ).Start();
         }
 
         public void RegisterPuppetMaster(string address)
@@ -536,9 +497,7 @@ namespace SESDAD
     class Broker
     {
         static public List<IPublisher> publishers = new List<IPublisher>();
-
         static public List<NamedSubscriber> subscribers = new List<NamedSubscriber>();
-
         static public List<NamedBroker> children = new List<NamedBroker>();
 
         static public IBroker parent;
@@ -562,7 +521,16 @@ namespace SESDAD
 
         static public object monitorLock = new object();
 
+        // No replication
         static public string name;
+
+        // For replication
+        static public string groupName;
+        // 0 = first broker, 1-N = replicas
+        static public int replicationId = 0;
+        static public List<IBroker> replicaBrokers = new List<IBroker>();
+        static public List<BrokerCircle> neighbourBrokers = new List<BrokerCircle>();
+        static public BrokerCircleSubscriptionTable subscriptionCircles = new BrokerCircleSubscriptionTable();
 
         static public bool frozen = false;
 
@@ -580,6 +548,7 @@ namespace SESDAD
             int port; Int32.TryParse( args[ 0 ], out port );
             string serviceName = args[ 1 ];
             Broker.name = args[2];
+            Broker.groupName = args[ 2 ]; // Group name will be overwritten if replication is active
             ordering = (args[ 3 ].ToUpper() == "NO" ? FileParsing.Ordering.No :
                 (args[ 3 ].ToUpper() == "FIFO" ? FileParsing.Ordering.Fifo : FileParsing.Ordering.Total));
             routing = (args[ 4 ].ToUpper() == "FLOODING" ? FileParsing.RoutingPolicy.Flooding :
@@ -612,6 +581,8 @@ namespace SESDAD
 
         static public void SendContent(Event evt, String name)
         {
+            //Console.WriteLine( lastSender + "  ->  " + Broker.groupName );
+
             if (Broker.routing == FileParsing.RoutingPolicy.Filter)
             {
                 SendContentFiltering(evt, name);
@@ -619,24 +590,38 @@ namespace SESDAD
 
             else
             {
+                string lastSender = evt.LastSenderName;
+                evt.LastSenderName = Broker.groupName;
+
                 // Flooding
+                Console.WriteLine( "Sending " + evt.EventCounter );
                 foreach (NamedSubscriber subscriber in Broker.subscribers)
                 {
                     subscriber.subcriber.ReceiveContent(evt);
                 }
 
-                foreach (NamedBroker broker in Broker.children)
+                // No replication
+                /*foreach ( NamedBroker broker in Broker.children)
                 {
-                    if (broker.name != name)
+                    if ( broker.name != lastSender )
                     {
                         new Task(() => { broker.broker.SendContent(evt, Broker.name); }).Start();
                     }
-                    //coiso.broker.SendContent( evt );
+                }*/
+
+                // Replication
+                foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
+                    if ( broker.name != lastSender ) {
+                        new Task( () => { broker.SendContent( evt, Broker.groupName ); } ).Start();
+                    }
                 }
             }
         }
 
         static public void SendContentFiltering( Event evt, String name ) {
+            string lastSender = evt.LastSenderName;
+            evt.LastSenderName = Broker.groupName;
+
             var subs = topicSubscribers.FindAllSubscribers( evt.Topic );
             foreach ( NamedSubscriber sub in subs ) {
                 try {
@@ -647,10 +632,19 @@ namespace SESDAD
                 }
             }
 
-            var bros = topicBrokers.FindAllBrokers( evt.Topic );
+            // No replication
+            /*var bros = topicBrokers.FindAllBrokers( evt.Topic );
             foreach ( NamedBroker bro in bros ) {
                 //bro.broker.SendContent( evt );
                 new Task( () => { bro.broker.SendContent( evt, Broker.name ); } ).Start();
+            }*/
+
+            // Replication
+            var bros = subscriptionCircles.FindAllBrokers( evt.Topic );
+            foreach ( BrokerCircle bro in bros ) {
+                if ( bro.name != lastSender ) {
+                    new Task( () => { bro.SendContent( evt, Broker.groupName ); } ).Start();
+                }
             }
         }
 
@@ -658,6 +652,17 @@ namespace SESDAD
             if ( routing == FileParsing.RoutingPolicy.Filter ) {
                 if ( topic.EndsWith( "/*" ) ) {
                     publisherTopics.EraseSubTopics( topic, topicSubscribers, topicBrokers );
+                }
+                else {
+                    publisherTopics.EraseTopic( topic );
+                }
+            }
+        }
+
+        static public void EraseRelatedEventsReplication( string topic ) {
+            if ( routing == FileParsing.RoutingPolicy.Filter ) {
+                if ( topic.EndsWith( "/*" ) ) {
+                    publisherTopics.EraseSubTopicsReplication( topic, topicSubscribers, subscriptionCircles );
                 }
                 else {
                     publisherTopics.EraseTopic( topic );

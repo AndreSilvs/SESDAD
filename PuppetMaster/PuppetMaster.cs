@@ -206,7 +206,7 @@ namespace SESDAD {
             }
 
             // Obter port mais alto para criar os brokers extra
-            /*int maxPort = 0;
+            int maxPort = 0;
             foreach ( FileParsing.Process processData in config.processes ) {
                 int port;
                 if ( Int32.TryParse( processData.port, out port ) ) {
@@ -262,24 +262,24 @@ namespace SESDAD {
                     PuppetMaster.processes.Add( processData.name + "_2", brokerP_2 );
 
                     // Relacionar brokers de backup com o site e os brokers principais
-                    //FileParsing.Process newbrokerProcess1 = new FileParsing.Process( processData.name + "_1", broker1Url, processData.GetSite(), processData.type );
-                    //FileParsing.Process newbrokerProcess2 = new FileParsing.Process( processData.name + "_2", broker2Url, processData.GetSite(), processData.type );
+                    FileParsing.Process newbrokerProcess1 = new FileParsing.Process( processData.name + "_1", broker1Url, processData.GetSite(), processData.type );
+                    FileParsing.Process newbrokerProcess2 = new FileParsing.Process( processData.name + "_2", broker2Url, processData.GetSite(), processData.type );
 
                     // Join these processes in a BrokerNode
                     BrokerNode node = new BrokerNode();
 
                     IPuppetBroker originalBroker;
                     brokers.TryGetValue( processData.name, out originalBroker );
-                    node.brokers.Add( originalBroker );
-                    node.brokers.Add( broker_1 );
-                    node.brokers.Add( broker_2 );
+                    node.AddBroker( originalBroker, processData );
+                    node.AddBroker( broker_1, newbrokerProcess1 );
+                    node.AddBroker( broker_2, newbrokerProcess2 );
 
                     node.site = processData.GetSite();
 
                     // Add this node under the name of the original node
                     brokerNodes.Add( processData.name, node );
                 }
-            }*/
+            }
 
             // Make each process known to its neighbours
             foreach (FileParsing.Process processData in config.processes)
@@ -304,24 +304,34 @@ namespace SESDAD {
                     {
                         if(site.parent != null)
                         {
+                            FileParsing.Process parentData = site.parent.broker;
+                            String parentUrl = parentData.url;
+                            String parentName = parentData.name;
 
-                                FileParsing.Process parentData = site.parent.broker;
+                            // No replication
                                 //Regista pai no filho
-                                String parentUrl = parentData.url;
-                                String parentName = parentData.name;
-
-                                obj.RegisterChild(parentUrl, parentName);
+                                /*obj.RegisterChild( parentUrl, parentName );
 
                                 //Regista filho no pai
-
-                               // String parentName = parentData.name;
-
                                 IPuppetBroker objParent;
+                                brokers.TryGetValue( parentName, out objParent );
+                                if ( objParent != null ) {
+                                    objParent.RegisterChild( processData.url, processData.name );
+                                }*/
 
-                                brokers.TryGetValue(parentName, out objParent);
-                                if (objParent != null)
-                                {
-                                    objParent.RegisterChild(processData.url, processData.name);
+                            // Replication
+                                BrokerNode parentNode = null;
+                                brokerNodes.TryGetValue( parentName, out parentNode );
+                                if ( parentNode != null ) {
+                                    // Regista pai no filho    
+                                    obj.RegisterChildReplication( parentNode.GetListOfAddresses(), parentName );
+                                 }
+
+                                BrokerNode childNode = null;
+                                brokerNodes.TryGetValue( processData.name, out childNode );
+                                if ( childNode != null ) {
+                                    //Regista filho no pai
+                                    parentNode.brokers[0].RegisterChildReplication( childNode.GetListOfAddresses(), processData.name );
                                 }
                         }
 
@@ -335,7 +345,6 @@ namespace SESDAD {
                             obj.RegisterPublisher(pubProcess.url);
                         }
                     }
-
                 }
 
                 if (processData.type == FileParsing.ProcessType.Subscriber)
@@ -344,13 +353,20 @@ namespace SESDAD {
                     site = processData.GetSite();
 
                     IPuppetSubscriber obj;
-
                     subscribers.TryGetValue(processData.name, out obj);
-                    if (obj != null)
+
+                    // No replication
+                    /*if ( obj != null)
                     {
                         obj.RegisterBroker(site.broker.url);
-                    }
+                    }*/
 
+                    // Replication - send the url of all Brokers in the node along with the original's name
+                    BrokerNode node = null;
+                    brokerNodes.TryGetValue( site.broker.name, out node );
+                    if ( node != null ) {
+                        obj.RegisterBrokers( node.GetListOfAddresses() );
+                    }
                 }
 
                 if (processData.type == FileParsing.ProcessType.Publisher)
@@ -359,16 +375,26 @@ namespace SESDAD {
                     site = processData.GetSite();
 
                     IPuppetPublisher obj;
-
                     publishers.TryGetValue(processData.name, out obj);
-                    if (obj != null)
-                    {
-                        obj.RegisterBroker(site.broker.url);
+
+                    // No replication
+                    /*if ( obj != null ) {
+                        obj.RegisterBroker( site.broker.url );
+                    }*/
+
+                    // Replication - send the url of all Brokers in the node along with the original's name
+                    BrokerNode node = null;
+                    brokerNodes.TryGetValue( site.broker.name, out node );
+                    if ( node != null ) {
+                        obj.RegisterBrokers( node.GetListOfAddresses() );
                     }
-
                 }
-
             }
+
+            // Make each replicated broker known to its neighbours
+            /*foreach ( FileParsing.Process processData in config.processes ) {
+                
+            }*/
 
             if ( config.GetOrdering() == FileParsing.Ordering.Total ) {
                 // Create Sequencer process

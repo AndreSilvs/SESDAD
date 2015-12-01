@@ -5,6 +5,7 @@ using System.Text;
 namespace SESDAD {
     public interface IPuppetSubscriber {
         void RegisterBroker( string address );
+        void RegisterBrokers( List<string> addresses );
 
         void ForceSubscribe( string topicname );
         void ForceUnsubscribe( string topicname );
