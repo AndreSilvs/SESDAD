@@ -270,7 +270,7 @@ namespace SESDAD
 
         public void SendContentPub(Event evt, String name)
         {
-            if(Broker.ordering == FileParsing.Ordering.Total)
+            if (Broker.ordering == FileParsing.Ordering.Total)
             {
                 evt.EventCounter = Broker.sequencer.GetNextSequenceNumber();
             }
@@ -361,7 +361,6 @@ namespace SESDAD
                 }
                 else
                 {
-                    Console.WriteLine("whyyyyyy?");
                     Broker.SendContent(evt, name);
                     if (Broker.logging == FileParsing.LoggingLevel.Full)
                     {
@@ -581,7 +580,7 @@ namespace SESDAD
             int port; Int32.TryParse( args[ 0 ], out port );
             string serviceName = args[ 1 ];
             Broker.name = args[2];
-            ordering = (args[ 3 ] == "NO" ? FileParsing.Ordering.No :
+            ordering = (args[ 3 ].ToUpper() == "NO" ? FileParsing.Ordering.No :
                 (args[ 3 ].ToUpper() == "FIFO" ? FileParsing.Ordering.Fifo : FileParsing.Ordering.Total));
             routing = (args[ 4 ].ToUpper() == "FLOODING" ? FileParsing.RoutingPolicy.Flooding :
                 FileParsing.RoutingPolicy.Filter);
