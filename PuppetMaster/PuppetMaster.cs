@@ -344,6 +344,8 @@ namespace SESDAD {
                         {
                             obj.RegisterPublisher(pubProcess.url);
                         }
+
+
                     }
                 }
 
@@ -392,9 +394,24 @@ namespace SESDAD {
             }
 
             // Make each replicated broker known to its neighbours
-            /*foreach ( FileParsing.Process processData in config.processes ) {
-                
-            }*/
+            foreach (FileParsing.Process processData in config.processes)
+            {
+                if (processData.type == FileParsing.ProcessType.Broker)
+                {
+                    FileParsing.Site site;
+                    site = processData.GetSite();
+
+                    BrokerNode broker = brokerNodes[processData.name];
+
+                    for(int i = 0; i<3; i++)
+                    {
+                        string url = broker.brokersData[i].url;
+                        IPuppetBroker obj = broker.brokers[i];
+
+                        obj.RegisterReplicas(broker.GetListOfAddressesExcept(url), processData.name, i);
+                    }
+                }
+            }
 
             if ( config.GetOrdering() == FileParsing.Ordering.Total ) {
                 // Create Sequencer process
