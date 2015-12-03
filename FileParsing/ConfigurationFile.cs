@@ -56,16 +56,18 @@ namespace SESDAD {
         }
 
         public class ConfigurationData {
+            public string PuppetMasterIP;
             LoggingLevel logging;
             RoutingPolicy routing;
             Ordering ordering;
             public List<Site> sites = new List<Site>();
             public List<Process> processes = new List<Process>();
 
-            public ConfigurationData( LoggingLevel logging = LoggingLevel.Light, RoutingPolicy routing = RoutingPolicy.Flooding, Ordering ordering = Ordering.Fifo ) {
+            public ConfigurationData( LoggingLevel logging = LoggingLevel.Light, RoutingPolicy routing = RoutingPolicy.Flooding, Ordering ordering = Ordering.Fifo, string pupIP = "localhost") {
                 this.logging = logging;
                 this.routing = routing;
                 this.ordering = ordering;
+                this.PuppetMasterIP = pupIP;
             }
 
             public LoggingLevel GetLoggingLevel() { return logging; }
@@ -94,8 +96,11 @@ namespace SESDAD {
                     Console.WriteLine( "Error while reading from configuration file." );
                     return null;
                 }
-                
+
                 // Parse content
+
+                //Puppet Master ip
+                string pupIP = "localhost";
 
                 // Logging Level
                 LoggingLevel level = LoggingLevel.Light;
@@ -110,75 +115,95 @@ namespace SESDAD {
                 List<Process> processes = new List<Process>();
 
                 foreach ( string line in lines ) {
-                    if ( line.StartsWith( "LoggingLevel" ) ) {
-                        Regex pattern = new Regex( @"LoggingLevel (?<type>(full|light))" );
-                        Match match = pattern.Match( line );
-                        if ( match.Success ) {
-                            string type = match.Groups[ "type" ].Value;
+                    if (line.StartsWith("LoggingLevel"))
+                    {
+                        Regex pattern = new Regex(@"LoggingLevel (?<type>(full|light))");
+                        Match match = pattern.Match(line);
+                        if (match.Success)
+                        {
+                            string type = match.Groups["type"].Value;
                             level = (type == "full" ? LoggingLevel.Full : LoggingLevel.Light);
                         }
                     }
-                    else if ( line.StartsWith( "RoutingPolicy" ) ) {
-                        Regex pattern = new Regex( @"RoutingPolicy (?<type>(flooding|filter))" );
-                        Match match = pattern.Match( line );
-                        if ( match.Success ) {
-                            string type = match.Groups[ "type" ].Value;
+                    else if (line.StartsWith("RoutingPolicy"))
+                    {
+                        Regex pattern = new Regex(@"RoutingPolicy (?<type>(flooding|filter))");
+                        Match match = pattern.Match(line);
+                        if (match.Success)
+                        {
+                            string type = match.Groups["type"].Value;
                             routing = (type == "flooding" ? RoutingPolicy.Flooding : RoutingPolicy.Filter);
                         }
                     }
-                    else if ( line.StartsWith( "Ordering" ) ) {
-                        Regex pattern = new Regex( @"Ordering (?<type>(NO|FIFO|TOTAL))" );
-                        Match match = pattern.Match( line );
-                        if ( match.Success ) {
-                            string type = match.Groups[ "type" ].Value;
-                            if ( type == "FIFO" ) { ordering = Ordering.Fifo; }
-                            else if ( type == "TOTAL" ) { ordering = Ordering.Total; }
-                            else if ( type == "NO" ) { ordering = Ordering.No; }
+                    else if (line.StartsWith("Ordering"))
+                    {
+                        Regex pattern = new Regex(@"Ordering (?<type>(NO|FIFO|TOTAL))");
+                        Match match = pattern.Match(line);
+                        if (match.Success)
+                        {
+                            string type = match.Groups["type"].Value;
+                            if (type == "FIFO") { ordering = Ordering.Fifo; }
+                            else if (type == "TOTAL") { ordering = Ordering.Total; }
+                            else if (type == "NO") { ordering = Ordering.No; }
                         }
                     }
-                    else if ( line.StartsWith( "Site" ) ) {
-                        Regex pattern = new Regex( @"Site (?<name>\w+) Parent (?<parent>(none|\w+))" );
-                        Match match = pattern.Match( line );
-                        if ( match.Success ) {
-                            string name = match.Groups[ "name" ].Value;
-                            string parent = match.Groups[ "parent" ].Value;
+                    else if (line.StartsWith("Site"))
+                    {
+                        Regex pattern = new Regex(@"Site (?<name>\w+) Parent (?<parent>(none|\w+))");
+                        Match match = pattern.Match(line);
+                        if (match.Success)
+                        {
+                            string name = match.Groups["name"].Value;
+                            string parent = match.Groups["parent"].Value;
 
                             Site parentSite = null;
-                            if ( parent != "none" ) {
-                                parentSite = sites.Find( n => n.name == parent );
+                            if (parent != "none")
+                            {
+                                parentSite = sites.Find(n => n.name == parent);
                             }
-                            sites.Add( new Site( name, parentSite ) );
+                            sites.Add(new Site(name, parentSite));
                         }
                     }
-                    else if ( line.StartsWith( "Process" ) ) {
-                        Regex pattern = new Regex( @"Process (?<name>\w+) [Ii][Ss] (?<type>(broker|publisher|subscriber)) On (?<site>\w+) URL (?<url>[\w.:/-]+)" );
-                        Match match = pattern.Match( line );
+                    else if (line.StartsWith("Process"))
+                    {
+                        Regex pattern = new Regex(@"Process (?<name>\w+) [Ii][Ss] (?<type>(broker|publisher|subscriber)) On (?<site>\w+) URL (?<url>[\w.:/-]+)");
+                        Match match = pattern.Match(line);
 
-                        if ( match.Success ) {
-                            string name = match.Groups[ "name" ].Value;
-                            string type = match.Groups[ "type" ].Value;
-                            string sitename = match.Groups[ "site" ].Value;
-                            string url = match.Groups[ "url" ].Value;
+                        if (match.Success)
+                        {
+                            string name = match.Groups["name"].Value;
+                            string type = match.Groups["type"].Value;
+                            string sitename = match.Groups["site"].Value;
+                            string url = match.Groups["url"].Value;
 
                             ProcessType pType = ProcessType.Broker;
-                            if ( type == "broker" ) { pType = ProcessType.Broker; }
-                            else if ( type == "publisher" ) { pType = ProcessType.Publisher; }
-                            else if ( type == "subscriber" ) { pType = ProcessType.Subscriber; }
+                            if (type == "broker") { pType = ProcessType.Broker; }
+                            else if (type == "publisher") { pType = ProcessType.Publisher; }
+                            else if (type == "subscriber") { pType = ProcessType.Subscriber; }
 
-                            Site site = sites.Find( n => n.name == sitename );
-                            if ( site == null ) { return null; }
+                            Site site = sites.Find(n => n.name == sitename);
+                            if (site == null) { return null; }
 
                             Process process = new Process(name, url, site, pType);
-                            processes.Add( process);
+                            processes.Add(process);
 
                             if (type == "broker") { site.broker = process; }
                             else if (type == "publisher") { site.publishers.Add(process); }
-                            else if (type == "subscriber") { site.subscribers.Add(process);  }
+                            else if (type == "subscriber") { site.subscribers.Add(process); }
+                        }
+                    }
+                    else if (line.StartsWith("PMIP"))
+                    {
+                        Regex pattern = new Regex(@"PMIP (?<ip>.*)");
+                        Match match = pattern.Match(line);
+                        if (match.Success)
+                        {
+                            pupIP = match.Groups["ip"].Value;
                         }
                     }
                 }
 
-                ConfigurationData data = new ConfigurationData( level, routing, ordering );
+                ConfigurationData data = new ConfigurationData( level, routing, ordering, pupIP );
 
                 foreach ( Site site in sites ) {
                     data.AddSite( site );
