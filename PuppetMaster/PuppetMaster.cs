@@ -86,7 +86,8 @@ namespace SESDAD {
             return;
         }
 
-        static string pmAddress = "tcp://localhost:30000/puppet";
+        //static string pmAddress = "tcp://localhost:30000/puppet";
+        static string pmAddress;
 
         static Dictionary<String, IPuppetSubscriber> subscribers = new Dictionary<String, IPuppetSubscriber>();
         static Dictionary<String, IPuppetPublisher> publishers = new Dictionary<String, IPuppetPublisher>();
@@ -120,6 +121,8 @@ namespace SESDAD {
                 Console.ReadLine();
                 return;
             }
+            pmAddress = "tcp://" + config.PuppetMasterIP + ":30000/puppet";
+
             Console.WriteLine( "Creating processes.." );
 
             foreach ( FileParsing.Process processData in config.processes ) {

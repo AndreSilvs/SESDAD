@@ -1,3 +1,4 @@
+PMIP 127.0.0.1
 LoggingLevel full
 RoutingPolicy flooding
 Ordering FIFO
