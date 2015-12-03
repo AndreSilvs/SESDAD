@@ -223,8 +223,6 @@ namespace SESDAD {
                                                 typeof( IPuppetMaster ),
                                                 "tcp://" + processData.ip + ":30000/puppet" );
 
-                    // Passing zero so that the broker selects an optional port??
-
                     // Criar o segundo e terceiro brokers a partir da informacao do primeiro broker
                     int port1 = maxPort + 1;
                     int port2 = maxPort + 2;
@@ -393,6 +391,49 @@ namespace SESDAD {
                 }
             }
 
+            // Ligar os brokers replica aos subscribers do site e brokers de outros sites
+            foreach ( var circle in PuppetMaster.brokerNodes ) {
+                FileParsing.Site site = circle.Value.site;
+                if ( site.parent != null ) {
+                    FileParsing.Process parentData = site.parent.broker;
+                    String parentCircleName = parentData.name;
+
+                    // No replication
+                    //Regista pai no filho
+                    /*obj.RegisterChild( parentUrl, parentName );
+
+                    //Regista filho no pai
+                    IPuppetBroker objParent;
+                    brokers.TryGetValue( parentName, out objParent );
+                    if ( objParent != null ) {
+                        objParent.RegisterChild( processData.url, processData.name );
+                    }*/
+
+                    for ( int i = 1; i < 3; ++i ) {
+                        // Replication
+                        BrokerNode parentNode = null;
+                        brokerNodes.TryGetValue( parentCircleName, out parentNode );
+                        if ( parentNode != null ) {
+                            // Regista pai no filho    
+                            circle.Value.brokers[ i ].RegisterChildReplication( parentNode.GetListOfAddresses(), parentCircleName );
+                        }
+
+                        //Regista filho no pai
+                        for ( int j = 1; j < 3; ++j ) {
+                            parentNode.brokers[ j ].RegisterChildReplication( circle.Value.GetListOfAddresses(), circle.Value.site.broker.name );
+                        }
+
+                        foreach ( FileParsing.Process subProcess in site.subscribers ) {
+                            circle.Value.brokers[ i ].RegisterSubscriber( subProcess.url, subProcess.name );
+                        }
+
+                        foreach ( FileParsing.Process pubProcess in site.publishers ) {
+                            circle.Value.brokers[ i ].RegisterPublisher( pubProcess.url );
+                        }
+                    }
+                }
+            }
+
             // Make each replicated broker known to its neighbours
             foreach (FileParsing.Process processData in config.processes)
             {
@@ -413,6 +454,7 @@ namespace SESDAD {
                 }
             }
 
+            // Criar sequencer se for ordem Total
             if ( config.GetOrdering() == FileParsing.Ordering.Total ) {
                 // Create Sequencer process
                 Process seqProcess = new Process();

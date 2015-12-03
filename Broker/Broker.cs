@@ -26,6 +26,7 @@ namespace SESDAD
 
         //PuppetMaster - register replica neighbours
         public void RegisterReplicas( List<string> addresses, string originalName, int id ) {
+            Console.WriteLine( "Group name: " + originalName );
             Broker.groupName = originalName;
             Broker.replicationId = id;
             foreach ( string address in addresses ) {

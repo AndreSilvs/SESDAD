@@ -2,7 +2,7 @@ Subscriber subscriber1 Subscribe /animal/*
 Subscriber subscriber2 Subscribe /animal/*
 Subscriber subscriber0 Subscribe /animal/*
 Status
-Wait 2000
+Wait 4000
 Publisher publisher1 Publish 3 Ontopic /animal/chordata/vertebrado/peixe Interval 500
 Publisher publisher0 Publish 3 Ontopic /animal/chordata/vertebrado/peixe Interval 500
 Wait 3000
