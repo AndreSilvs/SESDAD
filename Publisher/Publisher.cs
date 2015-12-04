@@ -180,7 +180,7 @@ namespace SESDAD
             BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
             IDictionary props = new Hashtable();
             props[ "port" ] = port;
-            props[ "timeout" ] = 10000; // 3 secs
+            props[ "timeout" ] = 15000; // 15 secs
             TcpChannel channel = new TcpChannel( props, null, provider );
             //TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, false);
