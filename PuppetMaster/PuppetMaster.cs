@@ -495,7 +495,7 @@ namespace SESDAD {
 
                 seqProcess.Start();
 
-                string seqUrl = "tcp://localhost:8999/seq";
+                string seqUrl = "tcp://" + config.PuppetMasterIP + ":8999/seq";
 
                 // Send sequencer url to all processes
                 foreach ( var broker in brokers ) {
