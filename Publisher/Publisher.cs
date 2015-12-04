@@ -174,7 +174,7 @@ namespace SESDAD
             props[ "timeout" ] = 3000; // 3 secs
             TcpChannel channel = new TcpChannel( props, null, provider );
             //TcpChannel channel = new TcpChannel(port);
-            ChannelServices.RegisterChannel(channel, true);
+            ChannelServices.RegisterChannel(channel, false);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
              typeof(RemotePublisher),

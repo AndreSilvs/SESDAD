@@ -564,7 +564,7 @@ namespace SESDAD
             TcpChannel channel = new TcpChannel( props, null, provider );
 
             //TcpChannel channel = new TcpChannel(port);
-            ChannelServices.RegisterChannel(channel, true);
+            ChannelServices.RegisterChannel(channel, false);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
               typeof(RemoteBroker),

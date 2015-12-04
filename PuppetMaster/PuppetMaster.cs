@@ -99,7 +99,7 @@ namespace SESDAD {
             System.IO.File.WriteAllText( @"log.txt", string.Empty );
 
             TcpChannel channel = new TcpChannel( 30000 );
-            ChannelServices.RegisterChannel( channel, true );
+            ChannelServices.RegisterChannel( channel, false );
 
             RemotingConfiguration.RegisterWellKnownServiceType(
               typeof(RemotePuppetMaster),
@@ -123,6 +123,38 @@ namespace SESDAD {
             }
             pmAddress = "tcp://" + config.PuppetMasterIP + ":30000/puppet";
 
+            // Check what type of puppet master this process should be
+            Console.WriteLine( "Should I be the Main or a Slave Puppet Master?" );
+            Console.WriteLine( "    1 - Main PM" );
+            Console.WriteLine( "    2 - Slave PM" );
+
+            ConsoleKeyInfo keyInfo;
+            int type = 0;
+            while ( true ) {
+                keyInfo = Console.ReadKey();
+                Console.WriteLine();
+
+                if ( keyInfo.KeyChar == '1' ) {
+                    type = 0;
+                    break;
+                }
+                else if ( keyInfo.KeyChar == '2' ) {
+                    type = 1;
+                    break;
+                }
+                else {
+                    Console.Write( "Enter 1 or 2: " );
+                }
+            }
+
+            if ( type == 1 ) {
+                Console.WriteLine( "     .. Waiting for commands .." );
+                Console.WriteLine( "====== PRESS ANY KEY TO QUIT ======" );
+                Console.ReadLine();
+                return;
+            }
+
+            // Main process master
             Console.WriteLine( "Creating processes.." );
 
             foreach ( FileParsing.Process processData in config.processes ) {
