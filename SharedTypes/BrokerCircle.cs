@@ -8,6 +8,8 @@ namespace SESDAD {
         public List<IBroker> brokers;
         public string name;
 
+        private int testIndex = 2;
+
         public BrokerCircle( string circleName ) {
             name = circleName;
             brokers = new List<IBroker>();
@@ -18,7 +20,7 @@ namespace SESDAD {
         }
 
         public void SendContent( Event evt, string name ) {
-            brokers[ 0 ].SendContent( evt, name );
+            brokers[ testIndex ].SendContent( evt, name );
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.SendContent( evt, name );
@@ -32,7 +34,12 @@ namespace SESDAD {
         }
 
         public void SendContentPub( Event evt, string name ) {
-            brokers[ 0 ].SendContentPub( evt, name );
+            try {
+                brokers[ testIndex ].SendContentPub( evt, name );
+            }
+            catch ( Exception e ){
+                Console.WriteLine( "Error sending event: " + e.Message );
+            }
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.SendContentPub( evt, name );
@@ -46,7 +53,7 @@ namespace SESDAD {
         }
 
         public void Subscribe( string processname, string topic ) {
-            brokers[ 0 ].Subscribe( processname, topic );
+            brokers[ testIndex ].Subscribe( processname, topic );
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.Subscribe( processname, topic );
@@ -60,7 +67,7 @@ namespace SESDAD {
         }
 
         public void SubscribeBroker( string processname, string topic ) {
-            brokers[ 0 ].SubscribeBroker( processname, topic );
+            brokers[ testIndex ].SubscribeBroker( processname, topic );
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.SubscribeBroker( processname, topic );
@@ -74,7 +81,7 @@ namespace SESDAD {
         }
 
         public void Unsubscribe( string processname, string topic ) {
-            brokers[ 0 ].Unsubscribe( processname, topic );
+            brokers[ testIndex ].Unsubscribe( processname, topic );
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.Unsubscribe( processname, topic );
@@ -88,7 +95,7 @@ namespace SESDAD {
         }
 
         public void UnsubscribeBroker( string processname, string topic ) {
-            brokers[ 0 ].UnsubscribeBroker( processname, topic );
+            brokers[ testIndex ].UnsubscribeBroker( processname, topic );
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.Unsubscribe( processname, topic );

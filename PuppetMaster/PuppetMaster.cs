@@ -237,7 +237,6 @@ namespace SESDAD {
                     // Prepare port for next iteration
                     maxPort += 2;
 
-                    // tcp://localhost:8086/broker
                     string broker1Url = "tcp://" + processData.ip + ":" + port1.ToString() + "/" + processData.serviceName;
                     string broker2Url = "tcp://" + processData.ip + ":" + port2.ToString() + "/" + processData.serviceName;
 
@@ -269,8 +268,7 @@ namespace SESDAD {
                     // Join these processes in a BrokerNode
                     BrokerNode node = new BrokerNode();
 
-                    IPuppetBroker originalBroker;
-                    brokers.TryGetValue( processData.name, out originalBroker );
+                    IPuppetBroker originalBroker = brokers[ processData.name ];
                     node.AddBroker( originalBroker, processData );
                     node.AddBroker( broker_1, newbrokerProcess1 );
                     node.AddBroker( broker_2, newbrokerProcess2 );
@@ -321,8 +319,7 @@ namespace SESDAD {
                                 }*/
 
                             // Replication
-                                BrokerNode parentNode = null;
-                                brokerNodes.TryGetValue( parentName, out parentNode );
+                                BrokerNode parentNode = brokerNodes[ parentName ];
                                 if ( parentNode != null ) {
                                     // Regista pai no filho    
                                     obj.RegisterChildReplication( parentNode.GetListOfAddresses(), parentName );
@@ -365,11 +362,8 @@ namespace SESDAD {
                     }*/
 
                     // Replication - send the url of all Brokers in the node along with the original's name
-                    BrokerNode node = null;
-                    brokerNodes.TryGetValue( site.broker.name, out node );
-                    if ( node != null ) {
-                        obj.RegisterBrokers( node.GetListOfAddresses() );
-                    }
+                    BrokerNode node = brokerNodes[ site.broker.name ];
+                    obj.RegisterBrokers( node.GetListOfAddresses() );
                 }
 
                 if (processData.type == FileParsing.ProcessType.Publisher)
@@ -386,20 +380,18 @@ namespace SESDAD {
                     }*/
 
                     // Replication - send the url of all Brokers in the node along with the original's name
-                    BrokerNode node = null;
-                    brokerNodes.TryGetValue( site.broker.name, out node );
-                    if ( node != null ) {
-                        obj.RegisterBrokers( node.GetListOfAddresses() );
-                    }
+                    BrokerNode node = brokerNodes[ site.broker.name ];
+                    obj.RegisterBrokers( node.GetListOfAddresses() );
                 }
             }
 
             // Ligar os brokers replica aos subscribers do site e brokers de outros sites
-            foreach ( var circle in PuppetMaster.brokerNodes ) {
-                FileParsing.Site site = circle.Value.site;
+            foreach ( var node in PuppetMaster.brokerNodes ) {
+                FileParsing.Site site = node.Value.site;
+                Console.WriteLine( "Processing site " + site.name );
                 if ( site.parent != null ) {
                     FileParsing.Process parentData = site.parent.broker;
-                    String parentCircleName = parentData.name;
+                    String parentNodeName = parentData.name;
 
                     // No replication
                     //Regista pai no filho
@@ -412,27 +404,29 @@ namespace SESDAD {
                         objParent.RegisterChild( processData.url, processData.name );
                     }*/
 
+                    BrokerNode parentNode = brokerNodes[ parentNodeName ];
+
                     for ( int i = 1; i < 3; ++i ) {
                         // Replication
-                        BrokerNode parentNode = null;
-                        brokerNodes.TryGetValue( parentCircleName, out parentNode );
-                        if ( parentNode != null ) {
-                            // Regista pai no filho    
-                            circle.Value.brokers[ i ].RegisterChildReplication( parentNode.GetListOfAddresses(), parentCircleName );
-                        }
+                        // Regista pai no filho    
+                        node.Value.brokers[ i ].RegisterChildReplication( parentNode.GetListOfAddresses(), parentNodeName );
+                    }
 
-                        //Regista filho no pai
-                        for ( int j = 1; j < 3; ++j ) {
-                            parentNode.brokers[ j ].RegisterChildReplication( circle.Value.GetListOfAddresses(), circle.Value.site.broker.name );
-                        }
+                    //Regista filhos no pai
+                    for ( int j = 1; j < 3; ++j ) {
+                        parentNode.brokers[ j ].RegisterChildReplication( node.Value.GetListOfAddresses(), node.Value.site.broker.name );
+                    }
+                }
 
-                        foreach ( FileParsing.Process subProcess in site.subscribers ) {
-                            circle.Value.brokers[ i ].RegisterSubscriber( subProcess.url, subProcess.name );
-                        }
+                for ( int i = 1; i < 3; ++i ) {
+                    ((IPuppetProcess)node.Value.brokers[ i ]).RegisterPuppetMaster( pmAddress );
 
-                        foreach ( FileParsing.Process pubProcess in site.publishers ) {
-                            circle.Value.brokers[ i ].RegisterPublisher( pubProcess.url );
-                        }
+                    foreach ( FileParsing.Process subProcess in site.subscribers ) {
+                        node.Value.brokers[ i ].RegisterSubscriber( subProcess.url, subProcess.name );
+                    }
+
+                    foreach ( FileParsing.Process pubProcess in site.publishers ) {
+                        node.Value.brokers[ i ].RegisterPublisher( pubProcess.url );
                     }
                 }
             }

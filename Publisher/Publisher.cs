@@ -128,6 +128,7 @@ namespace SESDAD
 
                 AsyncCallback remoteCallback = new AsyncCallback( PublishAsyncCallBack );
                 EventCounter eCounter = getCountAndIncrement( topic );
+                Console.WriteLine( "Sending to " + brokerCircle.name + " : " + topic + " " + eCounter.topicCounter + " " + eCounter.globalCounter );
                 IAsyncResult remAr = del.BeginInvoke( new Event( topic, Publisher.name + "_" + eCounter.topicCounter, Publisher.name, eCounter.topicCounter, eCounter.globalCounter  ), Publisher.name, remoteCallback, null );
 
                 //Publisher.puppetMaster.Log( "PubEvent" );

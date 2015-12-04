@@ -15,7 +15,7 @@ namespace SESDAD {
             //lock ( mutex ) {
                 // Se nao tem registo do topic, criar
                 list.Add( evt );
-                Console.WriteLine( "Adding " + evt.EventCounter );
+                Console.WriteLine( "Adding " + evt.EventCounter + " from " + evt.PublisherName + " topic " + evt.Topic );
                 // Ordenar lista por numero de evento de topico
                 list.Sort( ( t1, t2 ) => (t1.EventCounter - t2.EventCounter) );
             //}

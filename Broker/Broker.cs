@@ -370,7 +370,7 @@ namespace SESDAD
                 ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
                 if ( sub != null ) {
                     lock ( Broker.subscriptionMutex ) {
-                        // Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
+                         Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
                         Broker.topicSubscribers.AddTopicSubscriber( topic, processname, sub );
 
                         foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
@@ -463,7 +463,7 @@ namespace SESDAD
                                 Broker.EraseRelatedEvents( topic );
                                 foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
                                     if ( broker.name != processname ) {
-                                        broker.SubscribeBroker( Broker.groupName, topic );
+                                        broker.UnsubscribeBroker( Broker.groupName, topic );
                                     }
                                     //coiso.broker.SendContent( evt );
                                 }
@@ -595,9 +595,10 @@ namespace SESDAD
                 evt.LastSenderName = Broker.groupName;
 
                 // Flooding
-                Console.WriteLine( "Sending " + evt.EventCounter );
+                //Console.WriteLine( "Sending " + evt.EventCounter );
                 foreach (NamedSubscriber subscriber in Broker.subscribers)
                 {
+                    Console.WriteLine( "Sending evt to sub: Topic: " + evt.Topic + " Pub: " + evt.PublisherName + " No: " + evt.TopicEventNum + " Last Sender: " + lastSender );
                     subscriber.subcriber.ReceiveContent(evt);
                 }
 
@@ -612,6 +613,7 @@ namespace SESDAD
 
                 // Replication
                 foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
+                    Console.WriteLine( "Sending evt to bro: Topic: " + evt.Topic + " Pub: " + evt.PublisherName + " No: " + evt.TopicEventNum + " Last Sender: " + lastSender  + " Bro: " + broker.name );
                     if ( broker.name != lastSender ) {
                         new Task( () => { broker.SendContent( evt, Broker.groupName ); } ).Start();
                     }
