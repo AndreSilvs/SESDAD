@@ -16,6 +16,10 @@ namespace SESDAD
 
     class RemoteSubscriber : MarshalByRefObject, ISubscriber, IPuppetSubscriber, IPuppetProcess
     {
+        public override object InitializeLifetimeService() {
+            return null;
+        }
+
         public void RegisterBroker(string address)
         {
             Subscriber.broker = (IBroker)Activator.GetObject(
@@ -27,8 +31,10 @@ namespace SESDAD
         public void RegisterBrokers( List<string> addresses ) {
             // Subscriber doesn't need to know the broker's name
             BrokerCircle brokerCircle = new BrokerCircle( "" );
+            int id = 0;
             foreach ( string address in addresses ) {
-                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
+                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ), id );
+                id++;
             }
 
             Subscriber.brokerCircle = brokerCircle;
@@ -65,6 +71,10 @@ namespace SESDAD
                 System.Console.WriteLine("Topic: " + evt.Topic + " Content: " + evt.Content + " " + evt.EventCounter);
                 // Subscriber.puppetMaster.Log("SubEvent " + Subscriber.name + " thing.");
             }
+        }
+
+        public void InformNeighbourDeath( string circleName, int replicaId ) {
+            Subscriber.brokerCircle.NewCircleLeader( replicaId );
         }
 
 
@@ -196,7 +206,7 @@ namespace SESDAD
             BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
             IDictionary props = new Hashtable();
             props[ "port" ] = port;
-            props[ "timeout" ] = 3000; // 3 secs
+            props[ "timeout" ] = 10000; // 3 secs
             TcpChannel channel = new TcpChannel( props, null, provider );
             //TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, false);

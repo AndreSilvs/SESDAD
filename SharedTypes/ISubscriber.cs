@@ -7,5 +7,6 @@ namespace SESDAD
     public interface ISubscriber
     {
         void ReceiveContent(Event evt);
+        void InformNeighbourDeath( string circleName, int replicaId );
     }
 }

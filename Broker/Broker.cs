@@ -17,6 +17,10 @@ namespace SESDAD
 
         public delegate void SendContentDelegate( Event ev );
 
+        public override object InitializeLifetimeService() {
+            return null;
+        }
+
         // Non-interface methods
         public static void PublishAsyncCallBack( IAsyncResult ar ) {
             SendContentDelegate del = (SendContentDelegate)((AsyncResult)ar).AsyncDelegate;
@@ -37,8 +41,13 @@ namespace SESDAD
             {
                 Broker.leader = false;
             }
+            int repId = 0;
             foreach ( string address in addresses ) {
+                if ( repId == Broker.replicationId ) { repId++; }
                 Broker.replicaBrokers.Add( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
+                Broker.replicaBrokerIds.Add( repId );
+
+                repId++;
             }
         }
 
@@ -53,8 +62,10 @@ namespace SESDAD
         // Puppet Master
         public void RegisterChildReplication( List<string> addresses, string name ) {
             BrokerCircle brokerCircle = new BrokerCircle( name );
+            int id = 0;
             foreach ( string address in addresses ) {
-                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
+                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ), id );
+                id++;
             }
 
             // Add circle to a list of neighbour circles
@@ -606,12 +617,45 @@ namespace SESDAD
 
         public void MakeLeader()
         {
-            Broker.leader = true;
+            lock ( Broker.replicationLeaderLock ) {
+                if ( Broker.leader == false ) {
+                    Broker.leader = true;
+
+                    foreach ( BrokerCircle circle in Broker.neighbourBrokers ) {
+                        circle.InformNeighbourDeath( Broker.groupName, Broker.replicationId );
+                    }
+                    foreach ( var pub in Broker.publishers ) {
+                        pub.InformNeighbourDeath( Broker.groupName, Broker.replicationId );
+                    }
+                    foreach ( var sub in Broker.subscribers ) {
+                        sub.subcriber.InformNeighbourDeath( Broker.groupName, Broker.replicationId );
+                    }
+                }
+            }
         }
 
-        public void InformOfDeath()
+        public void InformOfDeath( int replicaIndex )
         {
-            throw new NotImplementedException();
+            lock ( Broker.replicationDeathLock ) {
+                int realIndex = -1;
+                for ( int i = 0; i < Broker.replicaBrokerIds.Count(); ++i ) {
+                    if ( Broker.replicaBrokerIds[ i ] == replicaIndex ) {
+                        realIndex = i;
+                        break;
+                    }
+                }
+                if ( realIndex != -1 ) {
+                    Broker.replicaBrokers.RemoveAt( realIndex );
+                    Broker.replicaBrokerIds.RemoveAt( realIndex );
+                }
+            }
+        }
+
+        public void InformNeighbourDeath( string circleName, int replicaId ) {
+            lock ( Broker.replicationNeighbourDeathLock ) {
+                var circle = Broker.neighbourBrokers.Find( n => n.name == circleName );
+                circle.NewCircleLeader( replicaId );
+            }
         }
     }
     class Broker
@@ -641,6 +685,10 @@ namespace SESDAD
 
         static public object monitorLock = new object();
 
+        static public object replicationLeaderLock = new object();
+        static public object replicationDeathLock = new object();
+        static public object replicationNeighbourDeathLock = new object();
+
         // No replication
         static public string name;
 
@@ -650,6 +698,7 @@ namespace SESDAD
         // 0 = first broker, 1-N = replicas
         static public int replicationId = 0;
         static public List<IBroker> replicaBrokers = new List<IBroker>();
+        static public List<int> replicaBrokerIds = new List<int>();
         static public List<BrokerCircle> neighbourBrokers = new List<BrokerCircle>();
         static public BrokerCircleSubscriptionTable subscriptionCircles = new BrokerCircleSubscriptionTable();
 
@@ -680,7 +729,7 @@ namespace SESDAD
             BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
             IDictionary props = new Hashtable();
             props[ "port" ] = port;
-            props[ "timeout" ] = 3000; // 3 secs
+            props[ "timeout" ] = 10000; // 3 secs
             TcpChannel channel = new TcpChannel( props, null, provider );
 
             //TcpChannel channel = new TcpChannel(port);

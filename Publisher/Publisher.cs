@@ -23,6 +23,9 @@ namespace SESDAD
     }
 
     class RemotePublisher : MarshalByRefObject, IPuppetPublisher, IPuppetProcess, IPublisher {
+        public override object InitializeLifetimeService() {
+            return null;
+        }
 
         public void RegisterBroker( string address ) {
             Publisher.broker = (IBroker)Activator.GetObject(
@@ -35,8 +38,10 @@ namespace SESDAD
         public void RegisterBrokers( List<string> addresses ) {
             // Publisher doesn't need to know the broker's name
             BrokerCircle brokerCircle = new BrokerCircle( "" );
+            int id = 0;
             foreach ( string address in addresses ) {
-                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
+                brokerCircle.AddBroker( (IBroker)Activator.GetObject( typeof( IBroker ), address ), id );
+                id++;
             }
 
             Publisher.brokerCircle = brokerCircle;
@@ -45,6 +50,10 @@ namespace SESDAD
         public void ForcePublish( int numberEvents, string topicname, int interval_ms ) {
             Console.WriteLine( "Publishing: " + numberEvents.ToString() + " " + topicname + " " + interval_ms.ToString() );
             new Task(() => { Publisher.PublishEvents( numberEvents, topicname, interval_ms ); } ).Start();
+        }
+
+        public void InformNeighbourDeath( string circleName, int replicaId ) {
+            Publisher.brokerCircle.NewCircleLeader( replicaId );
         }
 
         public void Status() {
@@ -171,7 +180,7 @@ namespace SESDAD
             BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
             IDictionary props = new Hashtable();
             props[ "port" ] = port;
-            props[ "timeout" ] = 3000; // 3 secs
+            props[ "timeout" ] = 10000; // 3 secs
             TcpChannel channel = new TcpChannel( props, null, provider );
             //TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, false);

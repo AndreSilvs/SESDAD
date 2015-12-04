@@ -6,5 +6,6 @@ namespace SESDAD
 {
     public interface IPublisher
     {
+        void InformNeighbourDeath( string circleName, int replicaId );
     }
 }

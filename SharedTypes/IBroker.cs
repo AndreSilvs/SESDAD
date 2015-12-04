@@ -16,6 +16,7 @@ namespace SESDAD
         void UnsubscribeBroker( string processname, string topic );
 
         void MakeLeader();
-        void InformOfDeath();
+        void InformOfDeath( int replicaIndex );
+        void InformNeighbourDeath( string circleName, int replicaId );
     }
 }
