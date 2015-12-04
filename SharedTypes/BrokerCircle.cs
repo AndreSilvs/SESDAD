@@ -26,6 +26,8 @@ namespace SESDAD {
             }
             catch ( Exception e ){
                 Console.WriteLine( "Error sending event: " + e.Message );
+                testIndex++;
+                SendContent(evt, name);
             }
     /*foreach ( IBroker broker in brokers ) {
         try {
@@ -45,6 +47,8 @@ namespace SESDAD {
             }
             catch ( Exception e ){
                 Console.WriteLine( "Error sending event: " + e.Message );
+                testIndex++;
+                SendContentPub(evt, name);
             }
             /*foreach ( IBroker broker in brokers ) {
                 try {
@@ -66,14 +70,8 @@ namespace SESDAD {
             catch (Exception e)
             {
                 Console.WriteLine("Error subscribing: " + e.Message);
-                try
-                {
-                    brokers[1].Subscribe(processname, topic);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error subscribing: " + ex.Message);
-                }
+                testIndex++;
+                Subscribe(processname, topic);
            }
             /*foreach ( IBroker broker in brokers ) {
                 try {
@@ -95,6 +93,8 @@ namespace SESDAD {
             catch (Exception e)
             {
                 Console.WriteLine("Error subscribing: " + e.Message);
+                testIndex++;
+                SubscribeBroker(processname, topic);
             }
                 /*foreach ( IBroker broker in brokers ) {
                     try {
@@ -116,6 +116,8 @@ namespace SESDAD {
             catch (Exception e)
             {
                 Console.WriteLine("Error unsubscribing: " + e.Message);
+                testIndex++;
+                Unsubscribe(processname, topic);
             }
     /*foreach ( IBroker broker in brokers ) {
         try {
@@ -137,6 +139,8 @@ namespace SESDAD {
             catch (Exception e)
             {
                 Console.WriteLine("Error unsubscribing: " + e.Message);
+                testIndex++;
+                UnsubscribeBroker(processname, topic);
             }
             /*foreach ( IBroker broker in brokers ) {
                 try {
