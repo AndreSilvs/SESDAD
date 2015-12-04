@@ -101,8 +101,7 @@ namespace SESDAD
         }
 
         public void Status() {
-            Console.WriteLine("I'm " + Broker.name);
-            Console.WriteLine("I'm alive");
+            Console.WriteLine( "STATUS " + Broker.name + " " + ( Broker.frozen ? "[Frozen]" : "[Alive]" ) );
             Console.WriteLine("Susbcriber subscriptions:");
             foreach (TopicSubscribers x in Broker.topicSubscribers.topicSubscribers)
             {
@@ -113,6 +112,7 @@ namespace SESDAD
             {
                 Console.WriteLine(x.topic);
             }
+            Console.WriteLine( "----- End status" );
         }
 
         public void Crash() {
@@ -733,7 +733,7 @@ namespace SESDAD
             BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
             IDictionary props = new Hashtable();
             props[ "port" ] = port;
-            props[ "timeout" ] = 10000; // 3 secs
+            props[ "timeout" ] = 15000; // 3 secs
             TcpChannel channel = new TcpChannel( props, null, provider );
 
             //TcpChannel channel = new TcpChannel(port);

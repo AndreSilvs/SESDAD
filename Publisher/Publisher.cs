@@ -57,8 +57,8 @@ namespace SESDAD
         }
 
         public void Status() {
-            Console.WriteLine("I'm " + Publisher.name);
-            Console.WriteLine("I'm alive");
+            Console.WriteLine( "STATUS " + Publisher.name + " " + (Publisher.frozen ? "[Frozen]" : "[Alive]") );
+            Console.WriteLine( "----- End status" );
         }
 
         public void Crash() {

@@ -80,16 +80,8 @@ namespace SESDAD
 
         public void Status()
         {
-            Console.WriteLine("I'm " + Subscriber.name);
-            if (Subscriber.frozen)
-            {
-                Console.WriteLine("Brrrr I'm freezing");
-
-            }
-            else
-            {
-                Console.WriteLine("I'm alive");
-            }
+            Console.WriteLine( "STATUS " + Subscriber.name + " " + (Subscriber.frozen ? "[Frozen]" : "[Alive]") );
+            Console.WriteLine( "----- End status" );
 
             //Se os subscribers souberem as suas subscrições por aqui tambem
         }

@@ -38,12 +38,13 @@ namespace SESDAD {
         // Caso a solucao seja alterada para qualquer no ser substituido
         // E necessario remover da lista os nos que falharam
         public void InformNeighbourDeath( string circleName, int replicaId ) {
-            Console.WriteLine( "Neighbour death: " + circleName + " " + replicaId );
+            Console.WriteLine( "Sending neighbour death: " + circleName + " " + replicaId );
             for ( int i = testIndex; i < brokers.Count; ++i ) {
                 brokers[ i ].InformNeighbourDeath( circleName, replicaId );
             }
         }
         public void NewCircleLeader( int replicaId ) {
+            Console.WriteLine( "Circle: " + name + " New leader: " + replicaId );
             testIndex = replicaId;
         }
 
