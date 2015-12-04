@@ -6,7 +6,7 @@ Status
 Wait 6000
 Publisher publisher0 Publish 3 Ontopic /animal/banana Interval 500
 Wait 6000
-Crash broker0
+Freeze broker0
 Wait 1000
 Publisher publisher0 Publish 3 Ontopic /animal/banana Interval 500
 Wait 6000

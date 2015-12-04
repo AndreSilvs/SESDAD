@@ -141,8 +141,8 @@ namespace SESDAD
         //Broker
         public void SendContent(Event evt, String name)
         {
-            new Task(() =>
-            {
+            //new Task(() =>
+            //{
                 lock (Broker.monitorLock)
                 {
                     while (Broker.frozen)
@@ -254,7 +254,7 @@ namespace SESDAD
                         }
                     }
                 }
-            }).Start();
+           // }).Start();
         }
 
         // No replication subscription
