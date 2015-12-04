@@ -14,5 +14,8 @@ namespace SESDAD
 
         void SubscribeBroker( string processname, string topic );
         void UnsubscribeBroker( string processname, string topic );
+
+        void MakeLeader();
+        void InformOfDeath();
     }
 }

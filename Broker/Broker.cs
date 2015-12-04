@@ -31,11 +31,11 @@ namespace SESDAD
             Broker.replicationId = id;
             if(id == 0)
             {
-                Broker.lider = true;
+                Broker.leader = true;
             }
             else
             {
-                Broker.lider = false;
+                Broker.leader = false;
             }
             foreach ( string address in addresses ) {
                 Broker.replicaBrokers.Add( (IBroker)Activator.GetObject( typeof( IBroker ), address ) );
@@ -140,6 +140,20 @@ namespace SESDAD
                     }
                 }
 
+                if (Broker.leader)
+                {
+                    foreach(var broker in Broker.replicaBrokers)
+                    {
+                        try {
+                            broker.SendContent(evt, name);
+                        }
+                            catch (Exception e)
+                        {
+                            Console.WriteLine("Error somewhere: " + e.Message);
+                        }
+                    }
+                }
+
                 if (Broker.ordering == FileParsing.Ordering.Fifo)
                 {
                     lock (Broker.subscriptionMutex)
@@ -154,7 +168,7 @@ namespace SESDAD
                             foreach (Event orderedEvent in pRegister.GetLastOrderedEvents(evt.Topic))
                             {
                                 //Console.WriteLine( "Send" );
-                                if (Broker.lider)
+                                if (Broker.leader)
                                 {
                                     Broker.SendContent(orderedEvent, name);
 
@@ -174,7 +188,7 @@ namespace SESDAD
                             //lock ( eList.mutex ) {
                             foreach (Event orderedEvent in eList.GetOrderedEventsUpToDate())
                             {
-                                if (Broker.lider)
+                                if (Broker.leader)
                                 {
                                     Broker.SendContent(orderedEvent, name);
 
@@ -202,7 +216,7 @@ namespace SESDAD
                             //lock ( Broker.totalOrderEvents.mutex ) {
                                 Broker.totalOrderEvents.AddEvent( evt );
                                 foreach ( Event orderedEvent in Broker.totalOrderEvents.GetOrderedEventsUpToDate() ) {
-                                if (Broker.lider)
+                                if (Broker.leader)
                                 {
                                     Broker.SendContent(orderedEvent, name);
 
@@ -220,7 +234,7 @@ namespace SESDAD
                 }
                 else
                 {
-                    if (Broker.lider)
+                    if (Broker.leader)
                     {
                         Broker.SendContent(evt, name);
                         if (Broker.logging == FileParsing.LoggingLevel.Full)
@@ -390,11 +404,17 @@ namespace SESDAD
                     }
                 }
 
-                if (Broker.lider)
+                if (Broker.leader)
                 {
                     foreach (IBroker broker in Broker.replicaBrokers)
                     {
-                        broker.Subscribe(processname, topic);
+                        try {
+                            broker.Subscribe(processname, topic);
+                        }
+                            catch (Exception e)
+                        {
+                            Console.WriteLine("Error somewhere: " + e.Message);
+                        }
                     }
                 }
 
@@ -404,7 +424,7 @@ namespace SESDAD
                          Console.WriteLine( "SUB: " + processname + " just subscribed to " + topic );
                         Broker.topicSubscribers.AddTopicSubscriber( topic, processname, sub );
 
-                        if (Broker.lider)
+                        if (Broker.leader)
                         {
                             foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
                             if ( broker.name != processname ) {
@@ -429,11 +449,17 @@ namespace SESDAD
                     }
                 }
 
-                if (Broker.lider)
+                if (Broker.leader)
                 {
                     foreach (IBroker broker in Broker.replicaBrokers)
                     {
-                        broker.Unsubscribe(processname, topic);
+                        try {
+                            broker.Unsubscribe(processname, topic);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Error somewhere: " + e.Message);
+                        }
                     }
                 }
                 ISubscriber sub = Broker.subscribers.Find( n => n.name == processname ).subcriber;
@@ -446,7 +472,7 @@ namespace SESDAD
                         bool b = !Broker.subscriptionCircles.HasTopic( topic );
                         if ( a && b ) {
                             Broker.EraseRelatedEventsReplication( topic );
-                            if (Broker.lider) { 
+                            if (Broker.leader) { 
                             foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
                                
                                     if (broker.name != processname)
@@ -470,11 +496,17 @@ namespace SESDAD
                     }
                 }
 
-                if (Broker.lider)
+                if (Broker.leader)
                 {
                     foreach (IBroker broker in Broker.replicaBrokers)
                     {
+                        try {
                         broker.SubscribeBroker(processname, topic);
+                        }
+                        catch (Exception e)
+                        {
+                        Console.WriteLine("Error somewhere: " + e.Message);
+                        }
                     }
                 }
 
@@ -484,7 +516,7 @@ namespace SESDAD
                         //Console.WriteLine( "BRO " + processname + " just subscribed to " + topic );
                         Broker.subscriptionCircles.AddTopicBroker( topic, bro );
 
-                        if (Broker.lider)
+                        if (Broker.leader)
                         {
                         foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
                                 if (broker.name != processname)
@@ -507,12 +539,20 @@ namespace SESDAD
                     }
                 }
 
-                if (Broker.lider)
+                if (Broker.leader)
                 {
                     foreach (IBroker broker in Broker.replicaBrokers)
                     {
-                        broker.UnsubscribeBroker(processname, topic);
-                    }
+                        try { 
+                            broker.UnsubscribeBroker(processname, topic);
+                        }
+                            catch (Exception e)
+                        {
+                            Console.WriteLine("Error somewhere: " + e.Message);
+                        }
+
+                }
+
                 }
 
                 BrokerCircle bro = Broker.neighbourBrokers.Find( n => n.name == processname );
@@ -526,7 +566,7 @@ namespace SESDAD
                             bool b = !Broker.subscriptionCircles.HasTopic( topic );
                             if ( a && b ) {
                                 Broker.EraseRelatedEvents( topic );
-                                    if (Broker.lider)
+                                    if (Broker.leader)
                                     {
                                 foreach ( BrokerCircle broker in Broker.neighbourBrokers ) {
                                         if (broker.name != processname)
@@ -563,6 +603,16 @@ namespace SESDAD
                 Console.WriteLine( "No sequencer found." );
             }*/
         }
+
+        public void MakeLeader()
+        {
+            Broker.leader = true;
+        }
+
+        public void InformOfDeath()
+        {
+            throw new NotImplementedException();
+        }
     }
     class Broker
     {
@@ -595,7 +645,7 @@ namespace SESDAD
         static public string name;
 
         // For replication
-        static public bool lider;
+        static public bool leader;
         static public string groupName;
         // 0 = first broker, 1-N = replicas
         static public int replicationId = 0;

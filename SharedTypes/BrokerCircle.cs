@@ -19,6 +19,16 @@ namespace SESDAD {
             brokers.Add( broker );
         }
 
+        public void InformOfDeath()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MakeLeader()
+        {
+            throw new NotImplementedException();
+        }
+
         public void SendContent( Event evt, string name ) {
             try
             {
@@ -27,6 +37,7 @@ namespace SESDAD {
             catch ( Exception e ){
                 Console.WriteLine( "Error sending event: " + e.Message );
                 testIndex++;
+                brokers[testIndex].MakeLeader();
                 SendContent(evt, name);
             }
     /*foreach ( IBroker broker in brokers ) {
@@ -48,6 +59,7 @@ namespace SESDAD {
             catch ( Exception e ){
                 Console.WriteLine( "Error sending event: " + e.Message );
                 testIndex++;
+                brokers[testIndex].MakeLeader();
                 SendContentPub(evt, name);
             }
             /*foreach ( IBroker broker in brokers ) {
@@ -71,6 +83,7 @@ namespace SESDAD {
             {
                 Console.WriteLine("Error subscribing: " + e.Message);
                 testIndex++;
+                brokers[testIndex].MakeLeader();
                 Subscribe(processname, topic);
            }
             /*foreach ( IBroker broker in brokers ) {
@@ -94,6 +107,7 @@ namespace SESDAD {
             {
                 Console.WriteLine("Error subscribing: " + e.Message);
                 testIndex++;
+                brokers[testIndex].MakeLeader();
                 SubscribeBroker(processname, topic);
             }
                 /*foreach ( IBroker broker in brokers ) {
@@ -117,6 +131,7 @@ namespace SESDAD {
             {
                 Console.WriteLine("Error unsubscribing: " + e.Message);
                 testIndex++;
+                brokers[testIndex].MakeLeader();
                 Unsubscribe(processname, topic);
             }
     /*foreach ( IBroker broker in brokers ) {
@@ -140,6 +155,7 @@ namespace SESDAD {
             {
                 Console.WriteLine("Error unsubscribing: " + e.Message);
                 testIndex++;
+                brokers[testIndex].MakeLeader();
                 UnsubscribeBroker(processname, topic);
             }
             /*foreach ( IBroker broker in brokers ) {
