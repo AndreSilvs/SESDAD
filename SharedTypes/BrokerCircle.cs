@@ -8,7 +8,7 @@ namespace SESDAD {
         public List<IBroker> brokers;
         public string name;
 
-        private int testIndex = 2;
+        private int testIndex = 0;
 
         public BrokerCircle( string circleName ) {
             name = circleName;
@@ -20,18 +20,24 @@ namespace SESDAD {
         }
 
         public void SendContent( Event evt, string name ) {
-            brokers[ testIndex ].SendContent( evt, name );
-            /*foreach ( IBroker broker in brokers ) {
-                try {
-                    broker.SendContent( evt, name );
-                }
-                catch ( Exception e ) {
-                    // Something went wrong with this broker
-                    // Remove broker
-                    // Foreach is not the best way to do this
-                }
-            }*/
+            try
+            {
+                brokers[ testIndex ].SendContent( evt, name );
+            }
+            catch ( Exception e ){
+                Console.WriteLine( "Error sending event: " + e.Message );
+            }
+    /*foreach ( IBroker broker in brokers ) {
+        try {
+            broker.SendContent( evt, name );
         }
+        catch ( Exception e ) {
+            // Something went wrong with this broker
+            // Remove broker
+            // Foreach is not the best way to do this
+        }
+    }*/
+}
 
         public void SendContentPub( Event evt, string name ) {
             try {
@@ -53,7 +59,22 @@ namespace SESDAD {
         }
 
         public void Subscribe( string processname, string topic ) {
-            brokers[ testIndex ].Subscribe( processname, topic );
+            try
+            {
+                brokers[testIndex].Subscribe(processname, topic);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error subscribing: " + e.Message);
+                try
+                {
+                    brokers[1].Subscribe(processname, topic);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error subscribing: " + ex.Message);
+                }
+           }
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.Subscribe( processname, topic );
@@ -67,35 +88,56 @@ namespace SESDAD {
         }
 
         public void SubscribeBroker( string processname, string topic ) {
-            brokers[ testIndex ].SubscribeBroker( processname, topic );
-            /*foreach ( IBroker broker in brokers ) {
-                try {
-                    broker.SubscribeBroker( processname, topic );
-                }
-                catch ( Exception e ) {
-                    // Something went wrong with this broker
-                    // Remove broker
-                    // Foreach is not the best way to do this
-                }
-            }*/
-        }
+            try
+            {
+                brokers[testIndex].SubscribeBroker(processname, topic);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error subscribing: " + e.Message);
+            }
+                /*foreach ( IBroker broker in brokers ) {
+                    try {
+                        broker.SubscribeBroker( processname, topic );
+                    }
+                    catch ( Exception e ) {
+                        // Something went wrong with this broker
+                        // Remove broker
+                        // Foreach is not the best way to do this
+                    }
+                }*/
+            }
 
         public void Unsubscribe( string processname, string topic ) {
-            brokers[ testIndex ].Unsubscribe( processname, topic );
-            /*foreach ( IBroker broker in brokers ) {
-                try {
-                    broker.Unsubscribe( processname, topic );
-                }
-                catch ( Exception e ) {
-                    // Something went wrong with this broker
-                    // Remove broker
-                    // Foreach is not the best way to do this
-                }
-            }*/
+            try
+            {
+                brokers[ testIndex ].Unsubscribe( processname, topic );
+              }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error unsubscribing: " + e.Message);
+            }
+    /*foreach ( IBroker broker in brokers ) {
+        try {
+            broker.Unsubscribe( processname, topic );
         }
+        catch ( Exception e ) {
+            // Something went wrong with this broker
+            // Remove broker
+            // Foreach is not the best way to do this
+        }
+    }*/
+}
 
         public void UnsubscribeBroker( string processname, string topic ) {
-            brokers[ testIndex ].UnsubscribeBroker( processname, topic );
+            try
+            {
+                brokers[ testIndex ].UnsubscribeBroker( processname, topic );
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error unsubscribing: " + e.Message);
+            }
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.Unsubscribe( processname, topic );
