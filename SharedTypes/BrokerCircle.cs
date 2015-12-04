@@ -53,7 +53,7 @@ namespace SESDAD {
         }
 
         public void SendContent( Event evt, string name ) {
-            //lock ( circleLock ) {
+            lock ( circleLock ) {
                 try {
                     brokers[ testIndex ].SendContent( evt, name );
                 }
@@ -65,7 +65,7 @@ namespace SESDAD {
                     brokers[ testIndex ].MakeLeader();
                     SendContent( evt, name );
                 }
-            //}
+            }
     /*foreach ( IBroker broker in brokers ) {
         try {
             broker.SendContent( evt, name );
@@ -79,7 +79,7 @@ namespace SESDAD {
 }
 
         public void SendContentPub( Event evt, string name ) {
-            //lock ( circleLock ) {
+            lock ( circleLock ) {
                 try {
                     brokers[ testIndex ].SendContentPub( evt, name );
                 }
@@ -91,7 +91,7 @@ namespace SESDAD {
                     brokers[ testIndex ].MakeLeader();
                     SendContentPub( evt, name );
                 }
-            //}
+            }
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.SendContentPub( evt, name );
@@ -105,7 +105,7 @@ namespace SESDAD {
         }
 
         public void Subscribe( string processname, string topic ) {
-            //lock ( circleLock ) {
+            lock ( circleLock ) {
                 try {
                     brokers[ testIndex ].Subscribe( processname, topic );
                 }
@@ -117,7 +117,7 @@ namespace SESDAD {
                     brokers[ testIndex ].MakeLeader();
                     Subscribe( processname, topic );
                 }
-            //}
+            }
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.Subscribe( processname, topic );
@@ -131,7 +131,7 @@ namespace SESDAD {
         }
 
         public void SubscribeBroker( string processname, string topic ) {
-            //lock ( circleLock ) {
+            lock ( circleLock ) {
                 try {
                     brokers[ testIndex ].SubscribeBroker( processname, topic );
                 }
@@ -143,7 +143,7 @@ namespace SESDAD {
                     brokers[ testIndex ].MakeLeader();
                     SubscribeBroker( processname, topic );
                 }
-            //}
+            }
                 /*foreach ( IBroker broker in brokers ) {
                     try {
                         broker.SubscribeBroker( processname, topic );
@@ -157,7 +157,7 @@ namespace SESDAD {
             }
 
         public void Unsubscribe( string processname, string topic ) {
-            //lock ( circleLock ) {
+            lock ( circleLock ) {
                 try {
                     brokers[ testIndex ].Unsubscribe( processname, topic );
                 }
@@ -169,7 +169,7 @@ namespace SESDAD {
                     brokers[ testIndex ].MakeLeader();
                     Unsubscribe( processname, topic );
                 }
-            //}
+            }
     /*foreach ( IBroker broker in brokers ) {
         try {
             broker.Unsubscribe( processname, topic );
@@ -183,7 +183,7 @@ namespace SESDAD {
         }
 
         public void UnsubscribeBroker( string processname, string topic ) {
-            //lock ( circleLock ) {
+            lock ( circleLock ) {
                 try {
                     brokers[ testIndex ].UnsubscribeBroker( processname, topic );
                 }
@@ -195,7 +195,7 @@ namespace SESDAD {
                     brokers[ testIndex ].MakeLeader();
                     UnsubscribeBroker( processname, topic );
                 }
-            //}
+            }
             /*foreach ( IBroker broker in brokers ) {
                 try {
                     broker.Unsubscribe( processname, topic );
