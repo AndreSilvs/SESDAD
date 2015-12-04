@@ -80,6 +80,9 @@ namespace SESDAD
 
             //Console.WriteLine( "I have a parent" );
         }
+        public void RegisterParentReplication( string name ) {
+            Broker.parentCircle = Broker.neighbourBrokers.Find( n => n.name == name );
+        }
 
         public void RegisterPublisher( string address ) {
             Broker.publishers.Add( (IPublisher)Activator.GetObject(
@@ -697,6 +700,7 @@ namespace SESDAD
         static public string groupName;
         // 0 = first broker, 1-N = replicas
         static public int replicationId = 0;
+        static public BrokerCircle parentCircle = null;
         static public List<IBroker> replicaBrokers = new List<IBroker>();
         static public List<int> replicaBrokerIds = new List<int>();
         static public List<BrokerCircle> neighbourBrokers = new List<BrokerCircle>();

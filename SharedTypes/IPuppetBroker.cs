@@ -18,6 +18,8 @@ namespace SESDAD {
 
         // addresses of all replicas (including the original), name of the main broker (broker circle)
         void RegisterChildReplication( List<string> addresses, string name );
+        // Assumes the parent is already registered.
+        void RegisterParentReplication( string name );
 
         /*void Status();
 

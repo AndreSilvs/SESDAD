@@ -355,6 +355,7 @@ namespace SESDAD {
                                 if ( parentNode != null ) {
                                     // Regista pai no filho    
                                     obj.RegisterChildReplication( parentNode.GetListOfAddresses(), parentName );
+                                    obj.RegisterParentReplication( parentName );
                                  }
 
                                 BrokerNode childNode = null;
@@ -442,6 +443,7 @@ namespace SESDAD {
                         // Replication
                         // Regista pai no filho    
                         node.Value.brokers[ i ].RegisterChildReplication( parentNode.GetListOfAddresses(), parentNodeName );
+                        node.Value.brokers[ i ].RegisterParentReplication( parentNodeName );
                     }
 
                     //Regista filhos no pai
