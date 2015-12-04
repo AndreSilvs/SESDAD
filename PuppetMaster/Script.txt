@@ -1,8 +1,9 @@
-Crash broker1
 Subscriber subscriber1 Subscribe /animal/*
 Subscriber subscriber2 Subscribe /animal/*
-Subscriber subscriber0 Subscribe /animal/*
+Subscriber subscriber0 Subscribe /ghoul/*
+Wait 6000
 Status
-Wait 4000
-Wait 3000
+Wait 6000
+Subscriber subscriber0 Unsubscribe /ghoul/*
+Wait 6000
 Status

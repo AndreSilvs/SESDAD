@@ -168,11 +168,11 @@ namespace SESDAD
         }
 
         public static void Unsubscribe( string topic ) {
-          //  Console.WriteLine( "Unsubscribing from: " + topic );
+            Console.WriteLine( "Unsubscribing from: " + topic );
 
             //broker.Unsubscribe( name, topic );
-            SubscriberDelegate del = new SubscriberDelegate( broker.Unsubscribe );
-            //SubscriberDelegate del = new SubscriberDelegate( brokerCircle.Unsubscribe );
+            //SubscriberDelegate del = new SubscriberDelegate( broker.Unsubscribe );
+            SubscriberDelegate del = new SubscriberDelegate( brokerCircle.Unsubscribe );
             AsyncCallback remoteCallback = new AsyncCallback( SubscriberCallback );
             IAsyncResult remAr = del.BeginInvoke( name, topic, remoteCallback, null );
 

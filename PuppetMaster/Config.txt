@@ -1,6 +1,6 @@
 PMIP 127.0.0.1
 LoggingLevel full
-RoutingPolicy flooding
+RoutingPolicy filtering
 Ordering FIFO
 
 Site site0 Parent none

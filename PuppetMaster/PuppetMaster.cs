@@ -130,7 +130,7 @@ namespace SESDAD {
 
             ConsoleKeyInfo keyInfo;
             int type = 0;
-            while ( true ) {
+           /* while ( true ) {
                 keyInfo = Console.ReadKey();
                 Console.WriteLine();
 
@@ -145,7 +145,7 @@ namespace SESDAD {
                 else {
                     Console.Write( "Enter 1 or 2: " );
                 }
-            }
+            }*/
 
             if ( type == 1 ) {
                 Console.WriteLine( "     .. Waiting for commands .." );

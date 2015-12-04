@@ -129,7 +129,7 @@ namespace SESDAD {
             // Foreach is not the best way to do this
         }
     }*/
-}
+        }
 
         public void UnsubscribeBroker( string processname, string topic ) {
             try
